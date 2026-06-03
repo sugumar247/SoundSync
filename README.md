@@ -21,6 +21,10 @@
   A lightweight, low-latency C# WPF application that captures your system's audio and routes it to multiple hardware output devices simultaneously. Built entirely on the Windows Core Audio API (WASAPI) using the NAudio library.
 </p>
 
+<p align="center">
+  <img src="demo.gif" alt="SoundSync Demonstration Loop" width="600" />
+</p>
+
 ## ✨ Features
 
 - **Multi-Endpoint Routing:** Play a single audio source (like a YouTube video or Spotify) through multiple pairs of headphones or speakers at the exact same time.
