@@ -27,7 +27,7 @@
 
 ## ✨ Features
 
-- **Multi-Endpoint Routing:** Play a single audio source (like a YouTube video or Spotify) through multiple pairs of headphones or speakers at the exact same time.
+- **Multi-Endpoint Routing:** Play a single audio source (like a YouTube video or Spotify or any audio source) through multiple headphones or speakers at the exact same time.
 - **Aggressive Latency Control:** Implements a custom ring-buffer clearing strategy to combat hardware clock drift, ensuring secondary devices stay within ~10-30ms of real-time.
 - **Anti-Feedback Loop Protection:** Automatically detects your default Windows playback device and prevents audio from being routed back into it, completely eliminating infinite echo loops.
 - **Dynamic Device Scanning:** Easily refresh the device list to detect newly plugged-in USB or Bluetooth headphones without restarting the app.
