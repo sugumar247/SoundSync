@@ -34,7 +34,7 @@ You do not need to install anything to use SoundSync!
    ```bash
    git clone https://github.com/sugumar247/SoundSync.git
    ```
-2. Open `SoundSync.sln` in Visual Studio 2022.
+2. Open `SoundSync.slnx` in Visual Studio 2022.
 3. The project relies on the [NAudio](https://github.com/naudio/NAudio) library. Visual Studio should restore this NuGet package automatically. If not, run:
    ```bash
    dotnet restore
