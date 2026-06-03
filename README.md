@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?color=007ACC" alt="Release Date" />
   <img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?color=orange" alt="Downloads" />
 
-  <img src="https://img.shields.io/badge/platform-Windows-lightgreen.svg" alt="Platform" />
+  <img src="https://img.shields.io/badge/platform-Windows-black.svg" alt="Platform" />
   <img src="https://img.shields.io/badge/language-C%23%20%7C%20.NET%208.0-blue.svg" alt="Language" />
   <img src="https://img.shields.io/badge/UI-WPF-blueviolet.svg" alt="Framework" />
   
