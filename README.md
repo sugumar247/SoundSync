@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="demo.gif" alt="SoundSync Demonstration Loop" width="600" />
+  <img src="asset/demo.gif" alt="SoundSync Demonstration Loop" width="600" />
 </p>
 
 ## ✨ Features
