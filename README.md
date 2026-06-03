@@ -44,6 +44,7 @@ You do not need to install anything to use SoundSync!
 1. Go to the [Releases Page](https://github.com/sugumar247/SoundSync/releases).
 2. Download **SoundSync-Portable.exe**.
 3. Double-click the file to run it. That's it!
+4. If you face any issue, open the application with  "Run as Administrator".
 
 *(Note: If you download the smaller `SoundSync-Light.exe` version, you must have the [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed on your PC).*
 
