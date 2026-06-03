@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="asset/demo.gif" alt="SoundSync Demonstration Loop" width="600" />
+  <img src="https://github.com/user-attachments/assets/b1edaad9-75aa-42cc-bc45-e3c5e94ea58f" alt="SoundSync Demonstration Loop" width="600" />
 </p>
 
 ## ✨ Features
