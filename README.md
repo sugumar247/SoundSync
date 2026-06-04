@@ -21,8 +21,10 @@
   A lightweight, low-latency C# WPF application that captures your system's audio and routes it to multiple hardware output devices simultaneously. Built entirely on the Windows Core Audio API (WASAPI) using the NAudio library.
 </p>
 
-<p align="center">
-  <video src="assets/demo.mp4" width="600" controls autoplay loop muted></video>
+<p>
+  <video controls width="800">
+    <source src="https://raw.githubusercontent.com/sugumar247/SoundSync/main/assets/demo.mp4" type="video/mp4">
+  </video>
 </p>
 
 ## ✨ Features
