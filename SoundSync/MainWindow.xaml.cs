@@ -1,4 +1,5 @@
 using NAudio.CoreAudioApi;
+using NAudio.Dsp;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
@@ -7,6 +8,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -23,9 +25,13 @@ namespace SoundSync
         private readonly List<WasapiOut> outputStreams = new List<WasapiOut>();
         private readonly List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
         private bool isConnected = false;
+        private bool isMuted = false;
 
         // System Tray Components
         private System.Windows.Forms.NotifyIcon? notifyIcon;
+
+        // Settings Profile Path
+        private readonly string profilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings_profile.json");
 
         public MainWindow()
         {
@@ -33,6 +39,58 @@ namespace SoundSync
             LoadDevices();
             InitializeNotifyIcon();
             this.StateChanged += MainWindow_StateChanged;
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Auto-load last saved settings on startup
+            LoadSavedProfile();
+        }
+
+        // Local hotkeys: Works when the application is active/focused
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.C)
+            {
+                ConnectButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == Key.M)
+            {
+                ToggleMute();
+                e.Handled = true;
+            }
+        }
+
+        private void ToggleMute()
+        {
+            if (!isConnected) return;
+
+            isMuted = !isMuted;
+            var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+            if (items != null)
+            {
+                foreach (var item in items)
+                {
+                    if (item.VolumeProvider != null)
+                    {
+                        // Set volume to 0 if muted, otherwise restore user fader setting
+                        item.VolumeProvider.Volume = isMuted ? 0f : item.Volume;
+                    }
+                }
+            }
+
+            if (isMuted)
+            {
+                StatusText.Text = "Status: MUTED (Press M to Unmute)";
+                StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FFC400"); // Yellow warning
+            }
+            else
+            {
+                StatusText.Text = "Status: Connected and Routing Audio!";
+                StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#55FF55");
+            }
         }
 
         private void InitializeNotifyIcon()
@@ -40,7 +98,6 @@ namespace SoundSync
             notifyIcon = new System.Windows.Forms.NotifyIcon();
             notifyIcon.Text = "SoundSync";
             
-            // Use application icon if available
             try
             {
                 var iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/logo.png"))?.Stream;
@@ -69,7 +126,6 @@ namespace SoundSync
                 Activate();
             };
 
-            // Add basic context menu to exit
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
             contextMenu.Items.Add("Open SoundSync", null, (s, e) =>
             {
@@ -88,7 +144,7 @@ namespace SoundSync
         {
             if (WindowState == WindowState.Minimized && notifyIcon != null)
             {
-                Hide(); // Hides window from taskbar, keeping it active in system tray
+                Hide(); 
                 notifyIcon.ShowBalloonTip(2000, "SoundSync", "SoundSync is running in the system tray.", System.Windows.Forms.ToolTipIcon.Info);
             }
         }
@@ -116,13 +172,13 @@ namespace SoundSync
                 return;
             }
             LoadDevices();
+            LoadSavedProfile(); 
         }
 
         private void CheckBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (isConnected)
             {
-                // Silently block the checkbox from being unchecked while running
                 e.Handled = true;
             }
         }
@@ -185,20 +241,29 @@ namespace SoundSync
                     };
                     deviceItem.VolumeProvider = volumeProvider;
 
-                    // 3. Attach custom dynamic audio delay
-                    var delayProvider = new DelaySampleProvider(volumeProvider)
+                    // 3. Attach 3-band Equalizer control
+                    var equalizerProvider = new EqualizerSampleProvider(volumeProvider)
                     {
-                        DelayMilliseconds = deviceItem.Delay
+                        BassDb = deviceItem.Bass,
+                        MidDb = deviceItem.Mid,
+                        TrebleDb = deviceItem.Treble
+                    };
+                    deviceItem.EqualizerProvider = equalizerProvider;
+
+                    // 4. Attach custom dynamic audio delay
+                    var delayProvider = new DelaySampleProvider(equalizerProvider)
+                    {
+                        DelayMilliseconds = 0 // Initial value, relative calculations will override this immediately
                     };
                     deviceItem.DelayProvider = delayProvider;
 
-                    // 4. Attach custom peak level VU meter
+                    // 5. Attach custom peak level VU meter
                     var meterProvider = new MeteringSampleProvider(delayProvider, (peak) =>
                     {
                         deviceItem.PeakLevel = peak;
                     });
 
-                    // 5. Convert back to wave and initialize wasapiOut
+                    // 6. Convert back to wave and initialize wasapiOut
                     wasapiOut.Init(meterProvider.ToWaveProvider());
 
                     wasapiOut.Play();
@@ -212,6 +277,9 @@ namespace SoundSync
                     Disconnect();
                     return;
                 }
+
+                // Calculate and apply initial relative delays
+                UpdateRelativeDelays();
 
                 loopbackCapture.DataAvailable += (s, args) =>
                 {
@@ -227,10 +295,14 @@ namespace SoundSync
                 loopbackCapture.StartRecording();
 
                 isConnected = true;
+                isMuted = false;
                 ConnectButton.Content = "DISCONNECT";
                 ConnectButton.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#CC3232");
                 StatusText.Text = "Status: Connected and Routing Audio!";
                 StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#55FF55");
+
+                // Auto-save settings on successful connection
+                SaveCurrentProfile();
             }
             catch (Exception ex)
             {
@@ -254,15 +326,15 @@ namespace SoundSync
                 stream.Dispose();
             }
 
-            // Unlink providers so sliders don't error out if dragged while disconnected
             var items = DeviceListBox.ItemsSource as List<DeviceItem>;
             if (items != null)
             {
                 foreach (var item in items)
                 {
                     item.VolumeProvider = null;
+                    item.EqualizerProvider = null;
                     item.DelayProvider = null;
-                    item.PeakLevel = 0f; // Reset VU meter
+                    item.PeakLevel = 0f; 
                 }
             }
 
@@ -270,15 +342,102 @@ namespace SoundSync
             buffers.Clear();
 
             isConnected = false;
+            isMuted = false;
             ConnectButton.Content = "CONNECT";
             ConnectButton.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#007ACC");
             StatusText.Text = "Status: Disconnected";
             StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FF5555");
         }
 
+        // Relative Latency Offset Recalculator
+        // Enables -200ms to 200ms sliders by delaying slower devices relatively
+        public void UpdateRelativeDelays()
+        {
+            var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+            if (items == null) return;
+
+            var activeItems = items.Where(i => i.IsSelected && i.DelayProvider != null).ToList();
+            if (activeItems.Count == 0) return;
+
+            // Find the lowest delay setting chosen by the user (-200ms to 200ms)
+            int minDelaySetting = activeItems.Min(i => i.Delay);
+
+            foreach (var item in activeItems)
+            {
+                if (item.DelayProvider != null)
+                {
+                    // Subtract the minimum delay so all delay values shift to positive millisecond offsets relative to each other
+                    item.DelayProvider.DelayMilliseconds = item.Delay - minDelaySetting;
+                }
+            }
+        }
+
+        // Profile serialization logic
+        private void SaveCurrentProfile()
+        {
+            try
+            {
+                var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+                if (items == null) return;
+
+                var data = items.Select(i => new SavedDeviceSettings
+                {
+                    DeviceId = i.Device.ID,
+                    IsSelected = i.IsSelected,
+                    Volume = i.Volume,
+                    Delay = i.Delay,
+                    Bass = i.Bass,
+                    Mid = i.Mid,
+                    Treble = i.Treble
+                }).ToList();
+
+                string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(profilePath, json);
+            }
+            catch
+            {
+                // Silently ignore saving errors
+            }
+        }
+
+        private void LoadSavedProfile()
+        {
+            try
+            {
+                if (!File.Exists(profilePath)) return;
+
+                var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+                if (items == null) return;
+
+                string json = File.ReadAllText(profilePath);
+                var savedData = JsonSerializer.Deserialize<List<SavedDeviceSettings>>(json);
+                if (savedData == null) return;
+
+                foreach (var saved in savedData)
+                {
+                    var matchingItem = items.FirstOrDefault(i => i.Device.ID == saved.DeviceId);
+                    if (matchingItem != null)
+                    {
+                        matchingItem.IsSelected = saved.IsSelected;
+                        matchingItem.Volume = saved.Volume;
+                        matchingItem.Delay = saved.Delay;
+                        matchingItem.Bass = saved.Bass;
+                        matchingItem.Mid = saved.Mid;
+                        matchingItem.Treble = saved.Treble;
+                    }
+                }
+            }
+            catch
+            {
+                // Silently ignore loading errors
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
+            SaveCurrentProfile();
             Disconnect();
+
             if (notifyIcon != null)
             {
                 notifyIcon.Visible = false;
@@ -288,7 +447,17 @@ namespace SoundSync
         }
     }
 
-    // Upgraded DeviceItem class handles UI updates from volume, delay, and peak level
+    public class SavedDeviceSettings
+    {
+        public string DeviceId { get; set; } = string.Empty;
+        public bool IsSelected { get; set; }
+        public float Volume { get; set; }
+        public int Delay { get; set; }
+        public float Bass { get; set; }
+        public float Mid { get; set; }
+        public float Treble { get; set; }
+    }
+
     public class DeviceItem : INotifyPropertyChanged
     {
         public MMDevice Device { get; set; } = null!;
@@ -301,7 +470,6 @@ namespace SoundSync
             set { _isSelected = value; OnPropertyChanged(); }
         }
 
-        // Starts at 1.0f (100% Volume)
         private float _volume = 1.0f;
         public float Volume
         {
@@ -318,7 +486,6 @@ namespace SoundSync
             }
         }
 
-        // Delay in milliseconds (default 0ms)
         private int _delay = 0;
         public int Delay
         {
@@ -328,14 +495,59 @@ namespace SoundSync
                 _delay = value;
                 OnPropertyChanged();
 
-                if (DelayProvider != null)
+                // Dispatch global relative calculations for active streams
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                    var mainWin = System.Windows.Application.Current.MainWindow as MainWindow;
+                    mainWin?.UpdateRelativeDelays();
+                }));
+            }
+        }
+
+        private float _bass = 0f;
+        public float Bass
+        {
+            get => _bass;
+            set
+            {
+                _bass = value;
+                OnPropertyChanged();
+                if (EqualizerProvider != null)
                 {
-                    DelayProvider.DelayMilliseconds = _delay;
+                    EqualizerProvider.BassDb = _bass;
                 }
             }
         }
 
-        // Peak volume level for VU meter (0.0 to 1.0)
+        private float _mid = 0f;
+        public float Mid
+        {
+            get => _mid;
+            set
+            {
+                _mid = value;
+                OnPropertyChanged();
+                if (EqualizerProvider != null)
+                {
+                    EqualizerProvider.MidDb = _mid;
+                }
+            }
+        }
+
+        private float _treble = 0f;
+        public float Treble
+        {
+            get => _treble;
+            set
+            {
+                _treble = value;
+                OnPropertyChanged();
+                if (EqualizerProvider != null)
+                {
+                    EqualizerProvider.TrebleDb = _treble;
+                }
+            }
+        }
+
         private float _peakLevel = 0f;
         public float PeakLevel
         {
@@ -348,16 +560,94 @@ namespace SoundSync
         }
 
         public VolumeSampleProvider? VolumeProvider { get; set; }
+        public EqualizerSampleProvider? EqualizerProvider { get; set; }
         public DelaySampleProvider? DelayProvider { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 
-    // Custom Delay Sample Provider wrapper to line up Bluetooth and Wired latency
+    public class EqualizerSampleProvider : ISampleProvider
+    {
+        private readonly ISampleProvider source;
+        private readonly BiQuadFilter[] filters;
+        private float bassDb;
+        private float midDb;
+        private float trebleDb;
+        private readonly object lockObject = new object();
+        private bool filtersNeedUpdate = true;
+
+        public EqualizerSampleProvider(ISampleProvider source)
+        {
+            this.source = source;
+            filters = new BiQuadFilter[source.WaveFormat.Channels * 3];
+            CreateFilters();
+        }
+
+        public WaveFormat WaveFormat => source.WaveFormat;
+
+        public float BassDb
+        {
+            get => bassDb;
+            set { lock (lockObject) { bassDb = value; filtersNeedUpdate = true; } }
+        }
+
+        public float MidDb
+        {
+            get => midDb;
+            set { lock (lockObject) { midDb = value; filtersNeedUpdate = true; } }
+        }
+
+        public float TrebleDb
+        {
+            get => trebleDb;
+            set { lock (lockObject) { trebleDb = value; filtersNeedUpdate = true; } }
+        }
+
+        private void CreateFilters()
+        {
+            int channels = WaveFormat.Channels;
+            int sampleRate = WaveFormat.SampleRate;
+
+            for (int c = 0; c < channels; c++)
+            {
+                filters[c * 3] = BiQuadFilter.LowShelf(sampleRate, 200, 1.0f, bassDb);
+                filters[c * 3 + 1] = BiQuadFilter.PeakingEQ(sampleRate, 1000, 1.0f, midDb);
+                filters[c * 3 + 2] = BiQuadFilter.HighShelf(sampleRate, 5000, 1.0f, trebleDb);
+            }
+            filtersNeedUpdate = false;
+        }
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int read = source.Read(buffer, offset, count);
+            lock (lockObject)
+            {
+                if (filtersNeedUpdate)
+                {
+                    CreateFilters();
+                }
+
+                int channels = WaveFormat.Channels;
+                for (int i = 0; i < read; i++)
+                {
+                    int channel = i % channels;
+                    float sample = buffer[offset + i];
+
+                    sample = filters[channel * 3].Transform(sample);
+                    sample = filters[channel * 3 + 1].Transform(sample);
+                    sample = filters[channel * 3 + 2].Transform(sample);
+
+                    buffer[offset + i] = sample;
+                }
+            }
+            return read;
+        }
+    }
+
     public class DelaySampleProvider : ISampleProvider
     {
         private readonly ISampleProvider source;
@@ -425,7 +715,6 @@ namespace SoundSync
         }
     }
 
-    // Custom Metering Sample Provider wrapper for real-time Peak Level tracking (VU Meter)
     public class MeteringSampleProvider : ISampleProvider
     {
         private readonly ISampleProvider source;
@@ -451,7 +740,6 @@ namespace SoundSync
                 if (abs > maxVal) maxVal = abs;
             }
 
-            // Smooth decay: Fast attack, slow release (standard envelope detection)
             if (maxVal > currentPeak)
             {
                 currentPeak = maxVal;
