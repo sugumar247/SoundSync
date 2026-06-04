@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.2-brightgreen.svg" alt="Version" />
+  <img src="https://img.shields.io/badge/version-1.1.0-brightgreen.svg" alt="Version" />
   <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?color=007ACC" alt="Release Date" />
   <img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?color=orange" alt="Downloads" />
 
