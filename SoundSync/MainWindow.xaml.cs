@@ -1,9 +1,10 @@
-﻿using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders; // Added for Volume Control
+using NAudio.Wave.SampleProviders;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -14,19 +15,82 @@ namespace SoundSync
 {
     public partial class MainWindow : Window
     {
-        private MMDeviceEnumerator enumerator;
-        private List<MMDevice> allDevices;
+        private MMDeviceEnumerator? enumerator;
+        private List<MMDevice>? allDevices;
 
         // NAudio Audio Components
-        private WasapiLoopbackCapture loopbackCapture;
-        private List<WasapiOut> outputStreams = new List<WasapiOut>();
-        private List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
+        private WasapiLoopbackCapture? loopbackCapture;
+        private readonly List<WasapiOut> outputStreams = new List<WasapiOut>();
+        private readonly List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
         private bool isConnected = false;
+
+        // System Tray Components
+        private System.Windows.Forms.NotifyIcon? notifyIcon;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadDevices();
+            InitializeNotifyIcon();
+            this.StateChanged += MainWindow_StateChanged;
+        }
+
+        private void InitializeNotifyIcon()
+        {
+            notifyIcon = new System.Windows.Forms.NotifyIcon();
+            notifyIcon.Text = "SoundSync";
+            
+            // Use application icon if available
+            try
+            {
+                var iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/logo.png"))?.Stream;
+                if (iconStream != null)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        iconStream.CopyTo(ms);
+                        using (var bmp = new System.Drawing.Bitmap(ms))
+                        {
+                            notifyIcon.Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+            }
+
+            notifyIcon.Visible = true;
+            notifyIcon.DoubleClick += (s, e) =>
+            {
+                Show();
+                WindowState = WindowState.Normal;
+                Activate();
+            };
+
+            // Add basic context menu to exit
+            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+            contextMenu.Items.Add("Open SoundSync", null, (s, e) =>
+            {
+                Show();
+                WindowState = WindowState.Normal;
+                Activate();
+            });
+            contextMenu.Items.Add("Exit", null, (s, e) =>
+            {
+                System.Windows.Application.Current.Shutdown();
+            });
+            notifyIcon.ContextMenuStrip = contextMenu;
+        }
+
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized && notifyIcon != null)
+            {
+                Hide(); // Hides window from taskbar, keeping it active in system tray
+                notifyIcon.ShowBalloonTip(2000, "SoundSync", "SoundSync is running in the system tray.", System.Windows.Forms.ToolTipIcon.Info);
+            }
         }
 
         private void LoadDevices()
@@ -40,7 +104,7 @@ namespace SoundSync
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading devices: " + ex.Message);
+                System.Windows.MessageBox.Show("Error loading devices: " + ex.Message);
             }
         }
 
@@ -48,7 +112,7 @@ namespace SoundSync
         {
             if (isConnected)
             {
-                MessageBox.Show("Please DISCONNECT first before refreshing the device list.");
+                System.Windows.MessageBox.Show("Please DISCONNECT first before refreshing the device list.");
                 return;
             }
             LoadDevices();
@@ -77,17 +141,19 @@ namespace SoundSync
 
         private void Connect()
         {
-            // Note: We now grab the full DeviceItem, not just the MMDevice, so we have access to its Volume settings!
-            var items = (List<DeviceItem>)DeviceListBox.ItemsSource;
+            var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+            if (items == null) return;
+
             var selectedDevices = items.Where(i => i.IsSelected).ToList();
             if (selectedDevices.Count == 0)
             {
-                MessageBox.Show("Please check at least one device to connect.");
+                System.Windows.MessageBox.Show("Please check at least one device to connect.");
                 return;
             }
 
             try
             {
+                if (enumerator == null) enumerator = new MMDeviceEnumerator();
                 var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
                 loopbackCapture = new WasapiLoopbackCapture();
                 var captureFormat = loopbackCapture.WaveFormat;
@@ -109,19 +175,31 @@ namespace SoundSync
                         DiscardOnBufferOverflow = true
                     };
 
-                    // ---- VOLUME CONTROL ENGINE ----
-                    // 1. Convert our raw bytes into float Samples
+                    // 1. Convert raw bytes to float Samples
                     var sampleProvider = buffer.ToSampleProvider();
-                    // 2. Attach a volume knob, setting it to whatever the slider is currently at
+                    
+                    // 2. Attach volume control
                     var volumeProvider = new VolumeSampleProvider(sampleProvider)
                     {
                         Volume = deviceItem.Volume
                     };
-                    // 3. Save a reference to this knob so the Slider can update it while running!
                     deviceItem.VolumeProvider = volumeProvider;
-                    // 4. Convert it back to a Wave format and pass it to WasapiOut
-                    wasapiOut.Init(volumeProvider.ToWaveProvider());
-                    // --------------------------------
+
+                    // 3. Attach custom dynamic audio delay
+                    var delayProvider = new DelaySampleProvider(volumeProvider)
+                    {
+                        DelayMilliseconds = deviceItem.Delay
+                    };
+                    deviceItem.DelayProvider = delayProvider;
+
+                    // 4. Attach custom peak level VU meter
+                    var meterProvider = new MeteringSampleProvider(delayProvider, (peak) =>
+                    {
+                        deviceItem.PeakLevel = peak;
+                    });
+
+                    // 5. Convert back to wave and initialize wasapiOut
+                    wasapiOut.Init(meterProvider.ToWaveProvider());
 
                     wasapiOut.Play();
                     outputStreams.Add(wasapiOut);
@@ -130,7 +208,7 @@ namespace SoundSync
 
                 if (outputStreams.Count == 0)
                 {
-                    MessageBox.Show("Only the default device was selected. You must select a secondary device.");
+                    System.Windows.MessageBox.Show("Only the default device was selected. You must select a secondary device.");
                     Disconnect();
                     return;
                 }
@@ -156,7 +234,7 @@ namespace SoundSync
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error starting audio routing: " + ex.Message);
+                System.Windows.MessageBox.Show("Error starting audio routing: " + ex.Message);
                 Disconnect();
             }
         }
@@ -176,12 +254,15 @@ namespace SoundSync
                 stream.Dispose();
             }
 
-            // Unlink volume providers so sliders don't error out if dragged while disconnected
-            if (DeviceListBox.ItemsSource != null)
+            // Unlink providers so sliders don't error out if dragged while disconnected
+            var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+            if (items != null)
             {
-                foreach (var item in (List<DeviceItem>)DeviceListBox.ItemsSource)
+                foreach (var item in items)
                 {
                     item.VolumeProvider = null;
+                    item.DelayProvider = null;
+                    item.PeakLevel = 0f; // Reset VU meter
                 }
             }
 
@@ -198,14 +279,19 @@ namespace SoundSync
         protected override void OnClosed(EventArgs e)
         {
             Disconnect();
+            if (notifyIcon != null)
+            {
+                notifyIcon.Visible = false;
+                notifyIcon.Dispose();
+            }
             base.OnClosed(e);
         }
     }
 
-    // Upgraded DeviceItem class handles UI updates from the slider
+    // Upgraded DeviceItem class handles UI updates from volume, delay, and peak level
     public class DeviceItem : INotifyPropertyChanged
     {
-        public MMDevice Device { get; set; }
+        public MMDevice Device { get; set; } = null!;
         public string Name => Device.FriendlyName;
 
         private bool _isSelected;
@@ -224,8 +310,7 @@ namespace SoundSync
             {
                 _volume = value;
                 OnPropertyChanged();
-
-                // If we are currently connected, update NAudio in real-time!
+                
                 if (VolumeProvider != null)
                 {
                     VolumeProvider.Volume = _volume;
@@ -233,12 +318,151 @@ namespace SoundSync
             }
         }
 
-        public VolumeSampleProvider VolumeProvider { get; set; }
+        // Delay in milliseconds (default 0ms)
+        private int _delay = 0;
+        public int Delay
+        {
+            get => _delay;
+            set
+            {
+                _delay = value;
+                OnPropertyChanged();
 
-        public event PropertyChangedEventHandler PropertyChanged;
+                if (DelayProvider != null)
+                {
+                    DelayProvider.DelayMilliseconds = _delay;
+                }
+            }
+        }
+
+        // Peak volume level for VU meter (0.0 to 1.0)
+        private float _peakLevel = 0f;
+        public float PeakLevel
+        {
+            get => _peakLevel;
+            set
+            {
+                _peakLevel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public VolumeSampleProvider? VolumeProvider { get; set; }
+        public DelaySampleProvider? DelayProvider { get; set; }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+    }
+
+    // Custom Delay Sample Provider wrapper to line up Bluetooth and Wired latency
+    public class DelaySampleProvider : ISampleProvider
+    {
+        private readonly ISampleProvider source;
+        private readonly Queue<float> delayQueue = new Queue<float>();
+        private readonly object lockObject = new object();
+        private int delaySamples;
+        private int currentDelayMs;
+
+        public DelaySampleProvider(ISampleProvider source)
+        {
+            this.source = source;
+        }
+
+        public WaveFormat WaveFormat => source.WaveFormat;
+
+        public int DelayMilliseconds
+        {
+            get => currentDelayMs;
+            set
+            {
+                lock (lockObject)
+                {
+                    currentDelayMs = value;
+                    delaySamples = (WaveFormat.SampleRate * WaveFormat.Channels * value) / 1000;
+                    
+                    while (delayQueue.Count > delaySamples)
+                    {
+                        delayQueue.Dequeue();
+                    }
+                }
+            }
+        }
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int read = source.Read(buffer, offset, count);
+
+            lock (lockObject)
+            {
+                if (delaySamples <= 0)
+                {
+                    delayQueue.Clear();
+                    return read;
+                }
+
+                for (int i = 0; i < read; i++)
+                {
+                    delayQueue.Enqueue(buffer[offset + i]);
+                }
+
+                while (delayQueue.Count < delaySamples)
+                {
+                    delayQueue.Enqueue(0f);
+                }
+
+                int written = 0;
+                while (written < read && delayQueue.Count > 0)
+                {
+                    buffer[offset + written] = delayQueue.Dequeue();
+                    written++;
+                }
+
+                return written;
+            }
+        }
+    }
+
+    // Custom Metering Sample Provider wrapper for real-time Peak Level tracking (VU Meter)
+    public class MeteringSampleProvider : ISampleProvider
+    {
+        private readonly ISampleProvider source;
+        private readonly Action<float> peakCallback;
+        private float currentPeak = 0f;
+
+        public MeteringSampleProvider(ISampleProvider source, Action<float> peakCallback)
+        {
+            this.source = source;
+            this.peakCallback = peakCallback;
+        }
+
+        public WaveFormat WaveFormat => source.WaveFormat;
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int samplesRead = source.Read(buffer, offset, count);
+            float maxVal = 0f;
+
+            for (int i = 0; i < samplesRead; i++)
+            {
+                float abs = Math.Abs(buffer[offset + i]);
+                if (abs > maxVal) maxVal = abs;
+            }
+
+            // Smooth decay: Fast attack, slow release (standard envelope detection)
+            if (maxVal > currentPeak)
+            {
+                currentPeak = maxVal;
+            }
+            else
+            {
+                currentPeak = currentPeak * 0.95f + maxVal * 0.05f;
+            }
+
+            peakCallback(currentPeak);
+            return samplesRead;
         }
     }
 }
