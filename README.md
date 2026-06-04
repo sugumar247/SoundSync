@@ -1,5 +1,5 @@
 <h1 align="center" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-  <img src="SoundSync/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
+  <img src="assets/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
 </h1>
 
 <p align="center">
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <video src="demo.mp4" width="600" controls autoplay loop muted></video>
+  <video src="assets/demo.mp4" width="600" controls autoplay loop muted></video>
 </p>
 
 ## ✨ Features
