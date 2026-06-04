@@ -2,8 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="SoundSync" Height="580" Width="680"
+        MinHeight="500" MinWidth="640"
         Background="#121316" WindowStartupLocation="CenterScreen"
-        Icon="logo.png" ResizeMode="CanMinimize"
+        Icon="logo.png" ResizeMode="CanResizeWithGrip"
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
@@ -203,14 +204,14 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="20">
+    <Grid Margin="20" Grid.IsSharedSizeScope="True">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- Header Rack-Mount Plate -->
+            <RowDefinition Height="Auto"/> <!-- Column Headers -->
+            <RowDefinition Height="*"/>    <!-- Mixer Channels -->
+            <RowDefinition Height="Auto"/> <!-- Info/Status Monitor -->
+            <RowDefinition Height="Auto"/> <!-- Master Switch -->
+            <RowDefinition Height="Auto"/> <!-- Console Shortcuts Footer -->
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,15">
@@ -230,13 +231,13 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="10,0,10,6">
+        <Grid Grid.Row="1" Margin="10,0,30,8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="70"/>
-                <ColumnDefinition Width="110"/>
-                <ColumnDefinition Width="110"/>
-                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="65"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
@@ -248,9 +249,9 @@
 
         <Border Grid.Row="2" Background="{StaticResource PanelBackgroundBrush}" BorderBrush="{StaticResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="5">
             <ListBox x:Name="DeviceListBox" Background="Transparent" BorderThickness="0" 
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 HorizontalContentAlignment="Stretch">  
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     HorizontalContentAlignment="Stretch">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Background" Value="Transparent"/>
@@ -277,16 +278,16 @@
                         <StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="70"/>
-                                    <ColumnDefinition Width="110"/>
-                                    <ColumnDefinition Width="110"/>
-                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="65"/>
                                 </Grid.ColumnDefinitions>
 
                                 <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
                                           Style="{StaticResource HardwareCheckBoxStyle}"
-                                          Grid.Column="0" VerticalAlignment="Center"
+                                          Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
                                           PreviewMouseDown="CheckBox_PreviewMouseDown"/>
 
                                 <ProgressBar Value="{Binding PeakLevel, Mode=OneWay}" 
@@ -295,11 +296,11 @@
 
                                 <Slider Grid.Column="2" Minimum="0" Maximum="1" Value="{Binding Volume}" 
                                         Style="{StaticResource ConsoleSliderStyle}"
-                                        VerticalAlignment="Center" Margin="5,0"/>
+                                        VerticalAlignment="Center" Margin="8,0"/>
 
                                 <Slider Grid.Column="3" Minimum="-200" Maximum="200" Value="{Binding Delay}" 
                                         Style="{StaticResource DelaySliderStyle}"
-                                        VerticalAlignment="Center" Margin="5,0"/>
+                                        VerticalAlignment="Center" Margin="8,0"/>
 
                                 <TextBlock Grid.Column="4" Text="{Binding Delay, StringFormat={}{0}ms}" 
                                            FontFamily="Consolas" FontSize="11" Foreground="#FFE082" 
@@ -316,15 +317,15 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="BASS" Grid.Column="0" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="BASS" Grid.Column="0" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
-                                        Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                        Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                <TextBlock Text="MID" Grid.Column="2" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="MID" Grid.Column="2" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <Slider Grid.Column="3" Minimum="-12" Maximum="12" Value="{Binding Mid}" 
-                                        Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                        Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                <TextBlock Text="TREBLE" Grid.Column="4" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="TREBLE" Grid.Column="4" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <Slider Grid.Column="5" Minimum="-12" Maximum="12" Value="{Binding Treble}" 
                                         Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             </Grid>
