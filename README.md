@@ -1,8 +1,13 @@
-<p align="center">
-  <img src="assets/logo.png" width="35" height="35" valign="middle" alt="SoundSync Logo" />
-  &nbsp;
-  <font size="100"><b>SoundSync</b></font>
-</p>
+<table align="center" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td valign="middle">
+      <img src="assets/logo.png" width="60" height="60" alt="SoundSync Logo" />
+    </td>
+    <td valign="middle" style="padding-left: 15px;">
+      <h1>SoundSync</h1>
+    </td>
+  </tr>
+</table>
 <p align="center">
   <img src="https://img.shields.io/badge/VERSION-1.1.1-2EA44F?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/PLATFORM-WINDOWS-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform" />
