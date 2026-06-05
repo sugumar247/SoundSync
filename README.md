@@ -15,15 +15,15 @@
   <img src="https://img.shields.io/badge/LANGUAGE-C%23%20%7C%20.NET%208-239120?style=for-the-badge&logo=dotnet&logoColor=white" alt="Language" />
   <img src="https://img.shields.io/badge/UI-WPF-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Framework" />
   <img src="https://img.shields.io/badge/LICENSE-MIT-b31b1b?style=for-the-badge" alt="License" />
-</p>
-
-<p align="center">
   <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?style=for-the-badge&color=007ACC" alt="Release Date" />
   <!-- Counts ALL assets across ALL releases historically -->
 <img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?style=for-the-badge&color=E65100" alt="Downloads" />
   <img src="https://img.shields.io/github/repo-size/sugumar247/SoundSync?style=for-the-badge&color=424242" alt="Repo Size" />
   <img src="https://img.shields.io/github/issues/sugumar247/SoundSync?style=for-the-badge&color=D32F2F" alt="Open Issues" />
+
 </p>
+
+
 
 
 <p align="center">
