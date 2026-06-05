@@ -1,7 +1,8 @@
-<h1 align="center" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-  <img src="assets/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
-</h1>
-
+<p align="center">
+  <img src="assets/logo.png" width="35" height="35" valign="middle" alt="SoundSync Logo" />
+  &nbsp;
+  <font size="100"><b>SoundSync</b></font>
+</p>
 <p align="center">
   <img src="https://img.shields.io/badge/VERSION-1.1.1-2EA44F?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/PLATFORM-WINDOWS-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform" />
