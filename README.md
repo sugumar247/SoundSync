@@ -8,8 +8,9 @@
     </td>
   </tr>
 </table>
+
 <p align="center">
-  <img src="https://img.shields.io/badge/VERSION-1.1.1-2EA44F?style=for-the-badge" alt="Version" />
+ <img src="https://img.shields.io/github/v/release/sugumar247/SoundSync?style=for-the-badge&color=2EA44F" alt="Latest Release" />
   <img src="https://img.shields.io/badge/PLATFORM-WINDOWS-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform" />
   <img src="https://img.shields.io/badge/LANGUAGE-C%23%20%7C%20.NET%208-239120?style=for-the-badge&logo=dotnet&logoColor=white" alt="Language" />
   <img src="https://img.shields.io/badge/UI-WPF-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Framework" />
