@@ -1,9 +1,9 @@
 <h1 align="center" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-  <img src="SoundSync/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
+  <img src="assets/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.2-brightgreen.svg" alt="Version" />
+  <img src="https://img.shields.io/badge/version-1.1.0-brightgreen.svg" alt="Version" />
   <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?color=007ACC" alt="Release Date" />
   <img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?color=orange" alt="Downloads" />
 
@@ -21,9 +21,10 @@
   A lightweight, low-latency C# WPF application that captures your system's audio and routes it to multiple hardware output devices simultaneously. Built entirely on the Windows Core Audio API (WASAPI) using the NAudio library.
 </p>
 
-<p align="center">
-  <video src="demo.mp4" width="600" controls autoplay loop muted></video>
-</p>
+
+
+https://github.com/user-attachments/assets/5ab51b37-de15-4bc4-8cd0-aba8fd689629
+
 
 ## ✨ Features
 
