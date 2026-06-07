@@ -1,20 +1,29 @@
-<h1 align="center" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-  <img src="assets/logo.png" width="35" height="35" style="vertical-align: middle;" /> SoundSync
-</h1>
+<table align="center" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td valign="middle">
+      <img src="assets/logo.png" width="60" height="60" alt="SoundSync Logo" />
+    </td>
+    <td valign="middle" style="padding-left: 15px;">
+      <h1>SoundSync</h1>
+    </td>
+  </tr>
+</table>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-brightgreen.svg" alt="Version" />
-  <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?color=007ACC" alt="Release Date" />
-  <img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?color=orange" alt="Downloads" />
+ <img src="https://img.shields.io/github/v/release/sugumar247/SoundSync?style=for-the-badge&color=2EA44F" alt="Latest Release" />
+  <img src="https://img.shields.io/badge/PLATFORM-WINDOWS-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/LANGUAGE-C%23%20%7C%20.NET%208-239120?style=for-the-badge&logo=dotnet&logoColor=white" alt="Language" />
+  <img src="https://img.shields.io/badge/UI-WPF-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Framework" />
+  <img src="https://img.shields.io/badge/LICENSE-MIT-b31b1b?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?style=for-the-badge&color=007ACC" alt="Release Date" />
+  <!-- Counts ALL assets across ALL releases historically -->
+<img src="https://img.shields.io/github/downloads/sugumar247/SoundSync/total?style=for-the-badge&color=E65100" alt="Downloads" />
+  <img src="https://img.shields.io/github/repo-size/sugumar247/SoundSync?style=for-the-badge&color=424242" alt="Repo Size" />
+  <img src="https://img.shields.io/github/issues/sugumar247/SoundSync?style=for-the-badge&color=D32F2F" alt="Open Issues" />
 
-  <img src="https://img.shields.io/badge/platform-Windows-black.svg" alt="Platform" />
-  <img src="https://img.shields.io/badge/language-C%23%20%7C%20.NET%208.0-blue.svg" alt="Language" />
-  <img src="https://img.shields.io/badge/UI-WPF-blueviolet.svg" alt="Framework" />
-  
-  <img src="https://img.shields.io/github/repo-size/sugumar247/SoundSync?color=informational" alt="Repo Size" />
-  <img src="https://img.shields.io/github/issues/sugumar247/SoundSync?color=red" alt="Open Issues" />
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
 </p>
+
+
 
 
 <p align="center">
@@ -23,7 +32,8 @@
 
 
 
-https://github.com/user-attachments/assets/5ab51b37-de15-4bc4-8cd0-aba8fd689629
+https://github.com/user-attachments/assets/8157d791-1f36-4df5-8095-1aa4ccdd7519
+
 
 
 ## ✨ Features
