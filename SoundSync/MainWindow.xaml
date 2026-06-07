@@ -220,7 +220,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                         <TextBlock Text="SOUNDSYNC" FontSize="20" FontWeight="Black" Foreground="White"/>
                         <Border Background="#1C2E24" CornerRadius="3" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="V1.1.1" Foreground="#00FF66" FontSize="10" FontFamily="Consolas" FontWeight="Bold"/>
+                            <TextBlock Text="V1.1.2" Foreground="#00FF66" FontSize="10" FontFamily="Consolas" FontWeight="Bold"/>
                         </Border>
                     </StackPanel>
 
@@ -316,7 +316,6 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
                                 <TextBlock Text="BASS" Grid.Column="0" FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
                                         Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
