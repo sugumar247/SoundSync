@@ -36,6 +36,10 @@ https://github.com/user-attachments/assets/83a4e97d-332c-42b8-93bc-3ba6f7212025
 
 
 
+https://github.com/user-attachments/assets/e2ad3c7d-e199-4517-95cb-572a3b1ab28f
+
+
+
 ## ✨ Features
 
 - **Multi-Endpoint Routing:** Play a single audio source (like a YouTube video or Spotify or any audio source) through multiple headphones or speakers at the exact same time.
