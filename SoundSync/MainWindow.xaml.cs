@@ -37,6 +37,9 @@ namespace SoundSync
         // SoundSync Link Wi-Fi Stream Server
         private SoundSyncLinkServer? linkServer;
 
+        // Default device peak level tracking timer
+        private System.Windows.Threading.DispatcherTimer? defaultDevicePeakTimer;
+
         // System Tray Components
         private System.Windows.Forms.NotifyIcon? notifyIcon;
 
@@ -65,6 +68,8 @@ namespace SoundSync
             InitializeNotifyIcon();
             this.StateChanged += MainWindow_StateChanged;
             this.Loaded += MainWindow_Loaded;
+
+            ApplyTheme(false);
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -100,18 +105,26 @@ namespace SoundSync
                     {
                         item.VolumeProvider.Volume = isMuted ? 0f : item.Volume;
                     }
+                    else
+                    {
+                        try
+                        {
+                            item.Device.AudioEndpointVolume.Mute = isMuted;
+                        }
+                        catch { }
+                    }
                 }
             }
 
             if (isMuted)
             {
                 StatusText.Text = "Status: MUTED (Press M to Unmute)";
-                StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FFC400");
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusMutedBrush");
             }
             else
             {
                 StatusText.Text = "Status: Connected and Routing Audio!";
-                StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#55FF55");
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
             }
         }
 
@@ -181,7 +194,20 @@ namespace SoundSync
             {
                 enumerator = new MMDeviceEnumerator();
                 allDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
-                var items = allDevices.Select(d => new DeviceItem { Device = d, IsSelected = false }).ToList();
+                var items = allDevices.Select(d => {
+                    float initialVol = 1.0f;
+                    try
+                    {
+                        initialVol = d.AudioEndpointVolume.MasterVolumeLevelScalar;
+                    }
+                    catch { }
+                    return new DeviceItem
+                    {
+                        Device = d,
+                        IsSelected = false,
+                        Volume = initialVol
+                    };
+                }).ToList();
                 DeviceListBox.ItemsSource = items;
             }
             catch (Exception ex)
@@ -200,6 +226,107 @@ namespace SoundSync
             LoadDevices();
             LoadSavedProfile();
         }
+
+        private bool isLightTheme = false;
+
+        private void ThemeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyTheme(!isLightTheme);
+        }
+
+        private void ApplyTheme(bool isLight)
+        {
+            isLightTheme = isLight;
+            var resources = this.Resources;
+
+            if (isLight)
+            {
+                resources["WindowBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F5F6F8"));
+                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
+                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F9FAFB"));
+                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E0E2E6"));
+                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1D24"));
+                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#4E525D"));
+                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#757B8A"));
+                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D0D3DC"));
+                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EAECEF"));
+                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F0F2F5"));
+                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D0D3DC"));
+                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
+                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A0A4B0"));
+                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#B26A00"));
+                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EAECEF"));
+                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F0F2F5"));
+                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DCDFE4"));
+                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A3A8B6"));
+                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E8F8F0"));
+                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#008744"));
+                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D48806"));
+                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#008744"));
+                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D32F2F"));
+
+                // Connect Button Light Brushes
+                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0284C7"));
+                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0369A1"));
+                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0EA5E9"));
+                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DC2626"));
+                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EF4444"));
+                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
+            }
+            else
+            {
+                resources["WindowBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#121316"));
+                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#181A1F"));
+                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#181A20"));
+                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2A2D35"));
+                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
+                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A9AEBB"));
+                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#6C727F"));
+                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2A2D35"));
+                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1B1E24"));
+                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0B0C0E"));
+                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#25272E"));
+                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E3138"));
+                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#4C505C"));
+                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFE082"));
+                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#090A0C"));
+                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1D24"));
+                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E323D"));
+                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1C23"));
+                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1C2E24"));
+                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FF00FF6D"));
+                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFC400"));
+                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#55FF55"));
+                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FF5555"));
+
+                // Connect Button Dark Brushes
+                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0A507A"));
+                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0E6496"));
+                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#00B0FF"));
+                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#B83232"));
+                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D63E3E"));
+                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#00E5FF"));
+            }
+
+            if (isLight)
+            {
+                ThemeButtonText.Text = "DARK MODE";
+                ThemeIconPath.Data = System.Windows.Media.Geometry.Parse("M9,2C7.95,2 6.95,2.23 6.05,2.63C9,3.87 11,6.7 11,10C11,13.3 9,16.13 6.05,17.37C6.95,17.77 7.95,18 9,18A8,8 0 0,0 17,10A8,8 0 0,0 9,2Z");
+                ThemeButton.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#757B8A"));
+            }
+            else
+            {
+                ThemeButtonText.Text = "LIGHT MODE";
+                ThemeIconPath.Data = System.Windows.Media.Geometry.Parse("M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,2A1,1 0 0,1 13,3V5A1,1 0 0,1 12,6A1,1 0 0,1 11,5V3A1,1 0 0,1 12,2M12,18A1,1 0 0,1 13,19V21A1,1 0 0,1 12,22A1,1 0 0,1 11,21V19A1,1 0 0,1 12,18M2,12A1,1 0 0,1 3,11H5A1,1 0 0,1 6,12A1,1 0 0,1 5,13H3A1,1 0 0,1 2,12M18,12A1,1 0 0,1 19,11H21A1,1 0 0,1 22,12A1,1 0 0,1 21,13H19A1,1 0 0,1 18,12M5.63,4.22A1,1 0 0,1 7.05,4.22L8.46,5.64A1,1 0 0,1 8.46,7.05A1,1 0 0,1 7.05,7.05L5.63,5.64A1,1 0 0,1 5.63,4.22M15.54,14.14A1,1 0 0,1 16.95,14.14L18.36,15.56A1,1 0 0,1 18.36,16.97A1,1 0 0,1 16.95,16.97L15.54,15.56A1,1 0 0,1 15.54,14.14M18.36,4.22A1,1 0 0,1 18.36,5.64L16.95,7.05A1,1 0 0,1 15.54,7.05A1,1 0 0,1 15.54,5.64L16.95,4.22A1,1 0 0,1 18.36,4.22M8.46,14.14A1,1 0 0,1 8.46,16.97L7.05,18.36A1,1 0 0,1 5.63,18.36A1,1 0 0,1 5.63,16.97L7.05,14.14A1,1 0 0,1 8.46,14.14Z");
+                ThemeButton.Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBlueBrush");
+            }
+        }
+
+        private System.Windows.Media.Color ColorFromHex(string hex)
+        {
+            return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+        }
+
 
         private void CheckBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -297,9 +424,9 @@ namespace SoundSync
                     buffers.Add(buffer);
                 }
 
-                if (outputStreams.Count == 0)
+                if (outputStreams.Count == 0 && !selectedDevices.Any(d => d.Device.ID == defaultDevice.ID))
                 {
-                    System.Windows.MessageBox.Show("Only the default device was selected. You must select a secondary device.");
+                    System.Windows.MessageBox.Show("Please select at least one active device (either default or secondary).");
                     Disconnect();
                     return;
                 }
@@ -309,7 +436,7 @@ namespace SoundSync
 
                 // START ZERO-CONFIGURATION WIRELESS TCP/WEBSOCKET STREAM SERVER
                 string ip = GetLocalIPAddress();
-                int port = 8080;
+                int port = 8090;
                 linkServer = new SoundSyncLinkServer(captureFormat.SampleRate);
                 linkServer.Start(port);
 
@@ -318,24 +445,52 @@ namespace SoundSync
                     // Broadcast directly over local Wi-Fi link to connected browser clients
                     linkServer?.BroadcastAudio(args.Buffer, args.BytesRecorded);
 
+                    const int TargetBufferDurationMs = 50;
+                    int targetBytes = (int)((TargetBufferDurationMs * captureFormat.AverageBytesPerSecond) / 1000.0);
+                    targetBytes -= targetBytes % captureFormat.BlockAlign;
+
+                    int toleranceBytes = (int)((20 * captureFormat.AverageBytesPerSecond) / 1000.0);
+                    toleranceBytes -= toleranceBytes % captureFormat.BlockAlign;
+
                     foreach (var buffer in buffers)
                     {
-                        if (buffer.BufferedDuration.TotalMilliseconds > 50)
+                        int currentBytes = buffer.BufferedBytes;
+
+                        if (currentBytes > targetBytes + toleranceBytes)
                         {
-                            buffer.ClearBuffer();
+                            int bytesToDiscard = currentBytes - targetBytes;
+                            bytesToDiscard -= bytesToDiscard % captureFormat.BlockAlign;
+                            if (bytesToDiscard > 0)
+                            {
+                                byte[] temp = new byte[bytesToDiscard];
+                                buffer.Read(temp, 0, bytesToDiscard);
+                            }
                         }
+                        else if (currentBytes < targetBytes - toleranceBytes)
+                        {
+                            int bytesToPad = targetBytes - currentBytes;
+                            bytesToPad -= bytesToPad % captureFormat.BlockAlign;
+                            if (bytesToPad > 0)
+                            {
+                                byte[] silence = new byte[bytesToPad];
+                                buffer.AddSamples(silence, 0, bytesToPad);
+                            }
+                        }
+
                         buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);
                     }
                 };
                 loopbackCapture.StartRecording();
 
+                StartDefaultDevicePeakTimer();
+
                 isConnected = true;
                 isMuted = false;
                 ConnectButton.Content = "DISCONNECT";
-                ConnectButton.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#CC3232");
+                ConnectButton.Tag = "Connected";
 
                 StatusText.Text = $"Streaming: http://{ip}:{port} | Routing Audio!";
-                StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#55FF55");
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
 
                 SaveCurrentProfile();
             }
@@ -357,15 +512,25 @@ namespace SoundSync
 
             foreach (var stream in outputStreams)
             {
-                stream.Stop();
-                stream.Dispose();
+                try
+                {
+                    stream.Stop();
+                    stream.Dispose();
+                }
+                catch { }
             }
 
             if (linkServer != null)
             {
-                linkServer.Stop();
+                try
+                {
+                    linkServer.Stop();
+                }
+                catch { }
                 linkServer = null;
             }
+
+            StopDefaultDevicePeakTimer();
 
             var items = DeviceListBox.ItemsSource as List<DeviceItem>;
             if (items != null)
@@ -384,10 +549,10 @@ namespace SoundSync
 
             isConnected = false;
             isMuted = false;
-            ConnectButton.Content = "CONNECT";
-            ConnectButton.Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#007ACC");
+            ConnectButton.Content = "ENGAGE SOUNDSYNC SYSTEM";
+            ConnectButton.Tag = "Disconnected";
             StatusText.Text = "Status: Disconnected";
-            StatusText.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FF5555");
+            StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusErrorBrush");
         }
 
         public void UpdateRelativeDelays()
@@ -406,6 +571,42 @@ namespace SoundSync
                 {
                     item.DelayProvider.DelayMilliseconds = item.Delay - minDelaySetting;
                 }
+            }
+        }
+
+        private void StartDefaultDevicePeakTimer()
+        {
+            defaultDevicePeakTimer = new System.Windows.Threading.DispatcherTimer();
+            defaultDevicePeakTimer.Interval = TimeSpan.FromMilliseconds(50);
+            defaultDevicePeakTimer.Tick += (s, e) =>
+            {
+                if (!isConnected) return;
+                try
+                {
+                    if (enumerator == null) enumerator = new MMDeviceEnumerator();
+                    var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                    var items = DeviceListBox.ItemsSource as List<DeviceItem>;
+                    if (items != null)
+                    {
+                        var defaultItem = items.FirstOrDefault(i => i.Device.ID == defaultDevice.ID);
+                        if (defaultItem != null)
+                        {
+                            // Query peak level from Windows AudioMeterInformation
+                            defaultItem.PeakLevel = defaultDevice.AudioMeterInformation.MasterPeakValue;
+                        }
+                    }
+                }
+                catch { }
+            };
+            defaultDevicePeakTimer.Start();
+        }
+
+        private void StopDefaultDevicePeakTimer()
+        {
+            if (defaultDevicePeakTimer != null)
+            {
+                defaultDevicePeakTimer.Stop();
+                defaultDevicePeakTimer = null;
             }
         }
 
@@ -725,6 +926,7 @@ namespace SoundSync
                     currentDelayMs = value;
                     delaySamples = (WaveFormat.SampleRate * WaveFormat.Channels * value) / 1000;
 
+                    // Trim down items if the delay size decreases
                     while (delayQueue.Count > delaySamples)
                     {
                         delayQueue.Dequeue();
@@ -735,6 +937,7 @@ namespace SoundSync
 
         public int Read(float[] buffer, int offset, int count)
         {
+            // Read input samples from the preceding pipeline source first
             int read = source.Read(buffer, offset, count);
 
             lock (lockObject)
@@ -747,22 +950,23 @@ namespace SoundSync
 
                 for (int i = 0; i < read; i++)
                 {
-                    delayQueue.Enqueue(buffer[offset + i]);
+                    float incomingSample = buffer[offset + i];
+
+                    // Populate queue with zero silence until the requested millisecond delay distance is filled
+                    if (delayQueue.Count < delaySamples)
+                    {
+                        delayQueue.Enqueue(incomingSample);
+                        buffer[offset + i] = 0f; // Return silence during initial delay loading phase
+                    }
+                    else
+                    {
+                        // Extract oldest sample and inject newest sample simultaneously
+                        buffer[offset + i] = delayQueue.Dequeue();
+                        delayQueue.Enqueue(incomingSample);
+                    }
                 }
 
-                while (delayQueue.Count < delaySamples)
-                {
-                    delayQueue.Enqueue(0f);
-                }
-
-                int written = 0;
-                while (written < read && delayQueue.Count > 0)
-                {
-                    buffer[offset + written] = delayQueue.Dequeue();
-                    written++;
-                }
-
-                return written;
+                return read;
             }
         }
     }

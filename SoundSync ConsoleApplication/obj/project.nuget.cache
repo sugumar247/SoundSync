@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "09WZqL5CZhM=",
+  "dgSpecHash": "v/l+MmYylyI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\VirtualAudioMixer.csproj",
+  "projectFilePath": "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\VirtualAudioMixer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\sugum\\.nuget\\packages\\naudio\\2.3.0\\naudio.2.3.0.nupkg.sha512",
     "C:\\Users\\sugum\\.nuget\\packages\\naudio.asio\\2.3.0\\naudio.asio.2.3.0.nupkg.sha512",

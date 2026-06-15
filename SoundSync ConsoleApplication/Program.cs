@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -95,14 +95,36 @@ namespace VirtualAudioMixer
                 // This event fires every few milliseconds when Windows hands us raw audio bytes
                 loopbackCapture.DataAvailable += (sender, args) =>
                 {
+                    const int TargetBufferDurationMs = 50;
+                    int targetBytes = (int)((TargetBufferDurationMs * captureFormat.AverageBytesPerSecond) / 1000.0);
+                    targetBytes -= targetBytes % captureFormat.BlockAlign;
+
+                    int toleranceBytes = (int)((20 * captureFormat.AverageBytesPerSecond) / 1000.0);
+                    toleranceBytes -= toleranceBytes % captureFormat.BlockAlign;
+
                     foreach (var buffer in buffers)
                     {
-                        // FIX #3: Aggressive Latency Control
-                        // If our buffer falls more than 50 milliseconds behind real-time due to clock drift,
-                        // we completely dump the old audio so it instantly catches back up to "live".
-                        if (buffer.BufferedDuration.TotalMilliseconds > 50)
+                        int currentBytes = buffer.BufferedBytes;
+
+                        if (currentBytes > targetBytes + toleranceBytes)
                         {
-                            buffer.ClearBuffer();
+                            int bytesToDiscard = currentBytes - targetBytes;
+                            bytesToDiscard -= bytesToDiscard % captureFormat.BlockAlign;
+                            if (bytesToDiscard > 0)
+                            {
+                                byte[] temp = new byte[bytesToDiscard];
+                                buffer.Read(temp, 0, bytesToDiscard);
+                            }
+                        }
+                        else if (currentBytes < targetBytes - toleranceBytes)
+                        {
+                            int bytesToPad = targetBytes - currentBytes;
+                            bytesToPad -= bytesToPad % captureFormat.BlockAlign;
+                            if (bytesToPad > 0)
+                            {
+                                byte[] silence = new byte[bytesToPad];
+                                buffer.AddSamples(silence, 0, bytesToPad);
+                            }
                         }
 
                         buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);

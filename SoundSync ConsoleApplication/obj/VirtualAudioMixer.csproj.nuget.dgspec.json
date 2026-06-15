@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\VirtualAudioMixer.csproj": {}
+    "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\VirtualAudioMixer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\VirtualAudioMixer.csproj": {
+    "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\VirtualAudioMixer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\VirtualAudioMixer.csproj",
+        "projectUniqueName": "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\VirtualAudioMixer.csproj",
         "projectName": "VirtualAudioMixer",
-        "projectPath": "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\VirtualAudioMixer.csproj",
+        "projectPath": "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\VirtualAudioMixer.csproj",
         "packagesPath": "C:\\Users\\sugum\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\sugum\\source\\repos\\VirtualAudioMixer\\VirtualAudioMixer\\obj\\",
+        "outputPath": "C:\\Users\\sugum\\source\\repos\\SoundSync\\SoundSync ConsoleApplication\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\sugum\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -69,7 +69,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
