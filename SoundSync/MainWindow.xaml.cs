@@ -241,82 +241,96 @@ namespace SoundSync
 
             if (isLight)
             {
-                resources["WindowBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F5F6F8"));
-                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
-                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F9FAFB"));
-                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E0E2E6"));
-                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1D24"));
-                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#4E525D"));
-                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#757B8A"));
-                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D0D3DC"));
-                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EAECEF"));
-                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F0F2F5"));
-                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D0D3DC"));
-                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
-                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A0A4B0"));
-                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#B26A00"));
-                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EAECEF"));
-                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F0F2F5"));
-                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DCDFE4"));
-                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A3A8B6"));
-                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E8F8F0"));
-                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#008744"));
-                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D48806"));
-                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#008744"));
-                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D32F2F"));
+                // Frontier Mode: Vintage weathered parchment paper style
+                resources["WindowBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#ECE1D0"));
+                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E4D5BE"));
+                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F5ECE0"));
+                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#9F8F75"));
+                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1B1612"));
+                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#4E3E33"));
+                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#7D6857"));
+                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C5B59C"));
+                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DCD0B9"));
+                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F7F2E9"));
+                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#BFB097"));
+                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DFD0B7"));
+                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#E2D2B9"));
+                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#CABAA2"));
+                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A0917C"));
+                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#F3E6E6"));
+                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A6012"));
+                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E5A27"));
+                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+
+                resources["AccentBlueBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+                resources["WarningRedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
 
                 // Connect Button Light Brushes
-                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0284C7"));
-                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0369A1"));
-                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0EA5E9"));
-                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DC2626"));
-                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EF4444"));
-                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
+                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
+                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#3D1B1B"));
+                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#433E3B"));
+                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#5C5551"));
+                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EADDC9"));
             }
             else
             {
-                resources["WindowBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#121316"));
-                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#181A1F"));
-                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#181A20"));
-                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2A2D35"));
-                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFFFFF"));
-                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A9AEBB"));
-                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#6C727F"));
-                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2A2D35"));
-                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1B1E24"));
-                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0B0C0E"));
-                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#25272E"));
-                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E3138"));
-                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#4C505C"));
-                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFE082"));
-                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#090A0C"));
-                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1D24"));
-                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E323D"));
-                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1A1C23"));
-                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1C2E24"));
-                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FF00FF6D"));
-                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FFC400"));
-                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#55FF55"));
-                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FF5555"));
+                // Campfire Mode: Deep earthy dark charcoal/black gradient
+                var darkBg = new System.Windows.Media.LinearGradientBrush();
+                darkBg.StartPoint = new System.Windows.Point(0, 0);
+                darkBg.EndPoint = new System.Windows.Point(0, 1);
+                darkBg.GradientStops.Add(new System.Windows.Media.GradientStop(ColorFromHex("#161413"), 0.0));
+                darkBg.GradientStops.Add(new System.Windows.Media.GradientStop(ColorFromHex("#0A0909"), 1.0));
+                resources["WindowBgBrush"] = darkBg;
+
+                resources["PanelBackgroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1B1917"));
+                resources["ChannelCardBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#24201E"));
+                resources["ConsoleBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#3B3530"));
+                resources["TextForegroundBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EADDC9"));
+                resources["TextSecondaryBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C2B59D"));
+                resources["TextMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#807361"));
+                resources["NoDevicesTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#3D3732"));
+                resources["ListBoxSeparatorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2E2824"));
+                resources["ControlBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0F0E0D"));
+                resources["ControlBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#423C37"));
+                resources["ThumbBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+                resources["ThumbBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C10B0B"));
+                resources["DelayTextBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#DCA462"));
+                resources["StatusPanelBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#141211"));
+                resources["ShortcutBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#1C1917"));
+                resources["ShortcutKeyBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2C2723"));
+                resources["ShortcutKeyShadowBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0A0909"));
+                resources["BadgeBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2D0B0B"));
+                resources["BadgeFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#FF3E3E"));
+                resources["StatusMutedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C29F72"));
+                resources["StatusSuccessBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#859F6C"));
+                resources["StatusErrorBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+
+                resources["AccentBlueBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+                resources["WarningRedBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C10B0B"));
 
                 // Connect Button Dark Brushes
-                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0A507A"));
-                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#0E6496"));
-                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#00B0FF"));
-                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#B83232"));
-                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#D63E3E"));
-                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#00E5FF"));
+                resources["ConnectButtonBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#A80505"));
+                resources["ConnectButtonHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#C10B0B"));
+                resources["ConnectButtonBorderBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EADDC9"));
+                resources["ConnectButtonConnectedBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#2D2723"));
+                resources["ConnectButtonConnectedHoverBgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#3D3530"));
+                resources["ConnectButtonConnectedFgBrush"] = new System.Windows.Media.SolidColorBrush(ColorFromHex("#EADDC9"));
             }
 
             if (isLight)
             {
-                ThemeButtonText.Text = "DARK MODE";
+                ThemeButtonText.Text = "CAMPFIRE MODE";
                 ThemeIconPath.Data = System.Windows.Media.Geometry.Parse("M9,2C7.95,2 6.95,2.23 6.05,2.63C9,3.87 11,6.7 11,10C11,13.3 9,16.13 6.05,17.37C6.95,17.77 7.95,18 9,18A8,8 0 0,0 17,10A8,8 0 0,0 9,2Z");
-                ThemeButton.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#757B8A"));
+                ThemeButton.Foreground = new System.Windows.Media.SolidColorBrush(ColorFromHex("#8A1212"));
             }
             else
             {
-                ThemeButtonText.Text = "LIGHT MODE";
+                ThemeButtonText.Text = "FRONTIER MODE";
                 ThemeIconPath.Data = System.Windows.Media.Geometry.Parse("M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,2A1,1 0 0,1 13,3V5A1,1 0 0,1 12,6A1,1 0 0,1 11,5V3A1,1 0 0,1 12,2M12,18A1,1 0 0,1 13,19V21A1,1 0 0,1 12,22A1,1 0 0,1 11,21V19A1,1 0 0,1 12,18M2,12A1,1 0 0,1 3,11H5A1,1 0 0,1 6,12A1,1 0 0,1 5,13H3A1,1 0 0,1 2,12M18,12A1,1 0 0,1 19,11H21A1,1 0 0,1 22,12A1,1 0 0,1 21,13H19A1,1 0 0,1 18,12M5.63,4.22A1,1 0 0,1 7.05,4.22L8.46,5.64A1,1 0 0,1 8.46,7.05A1,1 0 0,1 7.05,7.05L5.63,5.64A1,1 0 0,1 5.63,4.22M15.54,14.14A1,1 0 0,1 16.95,14.14L18.36,15.56A1,1 0 0,1 18.36,16.97A1,1 0 0,1 16.95,16.97L15.54,15.56A1,1 0 0,1 15.54,14.14M18.36,4.22A1,1 0 0,1 18.36,5.64L16.95,7.05A1,1 0 0,1 15.54,7.05A1,1 0 0,1 15.54,5.64L16.95,4.22A1,1 0 0,1 18.36,4.22M8.46,14.14A1,1 0 0,1 8.46,16.97L7.05,18.36A1,1 0 0,1 5.63,18.36A1,1 0 0,1 5.63,16.97L7.05,14.14A1,1 0 0,1 8.46,14.14Z");
                 ThemeButton.Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBlueBrush");
             }
@@ -325,6 +339,41 @@ namespace SoundSync
         private System.Windows.Media.Color ColorFromHex(string hex)
         {
             return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+        }
+
+        private void PresetButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as System.Windows.Controls.Button;
+            if (button == null) return;
+
+            var deviceItem = button.DataContext as DeviceItem;
+            if (deviceItem == null) return;
+
+            string? preset = button.Tag as string;
+            if (preset == "Campfire")
+            {
+                deviceItem.Bass = 2f;
+                deviceItem.Mid = 5f;
+                deviceItem.Treble = 3f;
+            }
+            else if (preset == "Gunslinger")
+            {
+                deviceItem.Bass = 6f;
+                deviceItem.Mid = -2f;
+                deviceItem.Treble = 4f;
+            }
+            else if (preset == "Saloon")
+            {
+                deviceItem.Bass = -3f;
+                deviceItem.Mid = 6f;
+                deviceItem.Treble = -2f;
+            }
+            else if (preset == "Reset")
+            {
+                deviceItem.Bass = 0f;
+                deviceItem.Mid = 0f;
+                deviceItem.Treble = 0f;
+            }
         }
 
 
@@ -549,10 +598,11 @@ namespace SoundSync
 
             isConnected = false;
             isMuted = false;
-            ConnectButton.Content = "ENGAGE SOUNDSYNC SYSTEM";
+            ConnectButton.Content = "ACTIVATE SOUNDSYNC CONSOLE";
             ConnectButton.Tag = "Disconnected";
             StatusText.Text = "Status: Disconnected";
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusErrorBrush");
+            OutlawSfxEngine.PlayDisconnect();
         }
 
         public void UpdateRelativeDelays()
@@ -1214,19 +1264,25 @@ namespace SoundSync
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
-    <title>SoundSync Link</title>
+    <title>SoundSync Link - Outlaw Edition</title>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Georgia:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;700&display=swap' rel='stylesheet'>
     <style>
+        @font-face {
+            font-family: 'Chinese Rocks Rg';
+            src: local('Chinese Rocks Rg'), local('ChineseRocks-Regular');
+        }
+
         :root {
-            --bg: #0A0B0E;
-            --surface-blur: rgba(18, 20, 26, 0.7);
-            --surface-border: rgba(255, 255, 255, 0.06);
-            --accent: #00E5FF;
-            --accent-glow: rgba(0, 229, 255, 0.25);
-            --success: #00E676;
-            --text-primary: #FFFFFF;
-            --text-secondary: #90A4AE;
+            --bg: #0C0A0A;
+            --panel-bg: #1A1614;
+            --border: #EADDC9;
+            --accent: #A80505;
+            --accent-hover: #C10B0B;
+            --success: #DCA462;
+            --error: #A80505;
+            --text-primary: #EADDC9;
+            --text-secondary: #8C7869;
         }
 
         * {
@@ -1238,8 +1294,11 @@ namespace SoundSync
 
         body {
             background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(20, 15, 12, 0.8) 0%, rgba(10, 8, 8, 0.95) 100%),
+                repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 2px);
             color: var(--text-primary);
-            font-family: 'Outfit', -apple-system, sans-serif;
+            font-family: 'Georgia', serif;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1248,12 +1307,12 @@ namespace SoundSync
             position: relative;
         }
 
-        /* Ambient Glow Background Backgrounds */
+        /* Ambient Red Glow in Background */
         .ambient-glow {
             position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(168, 5, 5, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -1263,24 +1322,22 @@ namespace SoundSync
         }
 
         .ambient-glow.active {
-            background: radial-gradient(circle, rgba(0, 230, 118, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
-            width: 800px;
-            height: 800px;
+            background: radial-gradient(circle, rgba(220, 164, 98, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+            width: 900px;
+            height: 900px;
         }
 
-        /* Premium Glass Card Container */
+        /* Outlaw Themed Box */
         .glass-card {
             position: relative;
             z-index: 10;
             width: 90%;
             max-width: 480px;
-            background: var(--surface-blur);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--surface-border);
-            border-radius: 32px;
+            background: var(--panel-bg);
+            border: 3px solid var(--border);
+            border-radius: 0px;
             padding: 40px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 8px 8px 0px #000;
             text-align: center;
             overflow: hidden;
         }
@@ -1289,29 +1346,30 @@ namespace SoundSync
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 14px;
+            margin-bottom: 28px;
         }
 
         .logo-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent), #00A6FF);
+            width: 42px;
+            height: 42px;
+            border-radius: 0;
+            background: var(--accent);
+            border: 2px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
-            animation: pulse 2s infinite alternate;
+            box-shadow: 3px 3px 0px #000;
+            transition: transform 0.2s ease;
         }
 
         .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #FFFFFF, #B0BEC5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-family: 'Chinese Rocks Rg', 'Georgia', serif;
+            font-size: 32px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--border);
+            text-shadow: 2px 2px 0px #000;
         }
 
         /* Status HUD Group */
@@ -1320,10 +1378,11 @@ namespace SoundSync
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin: 24px 0;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 18px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border);
+            border-radius: 0px;
             padding: 16px;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.4);
         }
 
         .hud-item {
@@ -1331,18 +1390,19 @@ namespace SoundSync
         }
 
         .hud-label {
-            font-size: 11px;
+            font-family: 'Chinese Rocks Rg', 'Georgia', serif;
+            font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             color: var(--text-secondary);
             margin-bottom: 4px;
         }
 
         .hud-value {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
-            font-weight: 600;
-            color: #ECEFF1;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         /* Visualizer Area */
@@ -1350,14 +1410,15 @@ namespace SoundSync
             position: relative;
             width: 100%;
             height: 140px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
+            background: #15110F;
+            border: 2px solid var(--border);
+            border-radius: 0px;
             margin: 28px 0;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5);
         }
 
         #visualizerCanvas {
@@ -1376,40 +1437,43 @@ namespace SoundSync
         }
 
         .visualizer-placeholder {
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 13px;
-            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-family: 'Chinese Rocks Rg', 'Georgia', serif;
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
             z-index: 2;
             transition: opacity 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
         }
 
         .visualizer-placeholder svg {
-            width: 32px;
-            height: 32px;
-            stroke: currentColor;
+            width: 36px;
+            height: 36px;
+            stroke: var(--accent);
             fill: none;
-            stroke-width: 1.5;
+            stroke-width: 2;
         }
 
         /* Primary Action Button */
         .btn-connect {
             position: relative;
-            background: linear-gradient(135deg, var(--accent), #0088FF);
-            color: #050608;
-            border: none;
+            background: var(--accent);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
             width: 100%;
-            padding: 20px;
-            font-size: 16px;
-            font-weight: 700;
-            border-radius: 20px;
+            padding: 18px;
+            font-family: 'Chinese Rocks Rg', 'Georgia', serif;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 0px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.3);
-            letter-spacing: 0.5px;
+            transition: all 0.1s ease;
+            box-shadow: 4px 4px 0px #000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1417,32 +1481,28 @@ namespace SoundSync
         }
 
         .btn-connect:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 229, 255, 0.5);
-            filter: brightness(1.1);
+            background: var(--accent-hover);
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px #000;
         }
 
         .btn-connect:active {
-            transform: translateY(1px);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
         }
 
         .btn-connect.active {
-            background: linear-gradient(135deg, var(--success), #00C853);
-            color: #050608;
-            box-shadow: 0 6px 24px rgba(0, 230, 118, 0.35);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
-            100% { transform: scale(1.05); box-shadow: 0 0 25px rgba(0, 229, 255, 0.6); }
+            background: #2D2723;
+            color: var(--success);
+            border-color: var(--success);
+            box-shadow: 4px 4px 0px #000;
         }
 
         .ripple-effect {
             position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(234, 221, 201, 0.2);
             transform: scale(0);
-            animation: ripple 0.6s linear;
+            animation: ripple 0.4s linear;
             pointer-events: none;
         }
 
@@ -1460,9 +1520,8 @@ namespace SoundSync
     <div class='glass-card'>
         <div class='header-logo'>
             <div class='logo-icon'>
-                <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#050608' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
-                    <polygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'></polygon>
-                    <path d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'></path>
+                <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#EADDC9' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>
+                    <path d='M3 18h18M6 18c0-3.5 2.5-6 6-6s6 2.5 6 6M8 12c0-2 1.5-4 4-4s4 2 4 4'></path>
                 </svg>
             </div>
             <div class='logo-text'>SoundSync Link</div>
@@ -1532,7 +1591,7 @@ namespace SoundSync
             ctx.clearRect(0, 0, width, height);
             
             // Draw visualizer glowing grid background
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+            ctx.strokeStyle = 'rgba(234, 221, 201, 0.02)';
             ctx.lineWidth = 1;
             for (let i = 20; i < width; i += 20) {
                 ctx.beginPath();
@@ -1542,14 +1601,13 @@ namespace SoundSync
             }
 
             // Draw sound waveform
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 3;
             const grad = ctx.createLinearGradient(0, 0, width, 0);
-            grad.addColorStop(0, '#00E5FF');
-            grad.addColorStop(0.5, '#00E676');
-            grad.addColorStop(1, '#00E5FF');
+            grad.addColorStop(0, '#A80505');
+            grad.addColorStop(0.5, '#DCA462');
+            grad.addColorStop(1, '#A80505');
             ctx.strokeStyle = grad;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = 'rgba(0, 229, 255, 0.4)';
+            ctx.shadowBlur = 0;
 
             ctx.beginPath();
 
@@ -1571,7 +1629,6 @@ namespace SoundSync
 
             ctx.lineTo(width, height / 2);
             ctx.stroke();
-            ctx.shadowBlur = 0; // reset
         }
 
         // Ripple Effect Generator
@@ -1604,6 +1661,7 @@ namespace SoundSync
             analyser.connect(audioCtx.destination);
             
             btnText.innerText = 'ESTABLISHING...';
+            playBtn.style.background = '';
             statusVal.innerText = 'NEGOTIATING';
 
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1613,6 +1671,7 @@ namespace SoundSync
             ws.onopen = () => {
                 btnText.innerText = 'STREAM ACTIVE';
                 playBtn.classList.add('active');
+                playBtn.style.background = '';
                 statusVal.innerText = 'CONNECTED';
                 statusVal.style.color = 'var(--success)';
                 visualizerBox.classList.add('active');
@@ -1660,9 +1719,9 @@ namespace SoundSync
             ws.onclose = () => {
                 btnText.innerText = 'DISCONNECTED';
                 playBtn.classList.remove('active');
-                playBtn.style.background = '#FF5252';
+                playBtn.style.background = 'var(--error)';
                 statusVal.innerText = 'CLOSED';
-                statusVal.style.color = '#FF5252';
+                statusVal.style.color = 'var(--error)';
                 visualizerBox.classList.remove('active');
                 bgGlow.classList.remove('active');
                 visPlaceholder.style.display = 'flex';
@@ -1675,6 +1734,60 @@ namespace SoundSync
     </script>
 </body>
 </html>";
+        }
+    }
+
+    public static class OutlawSfxEngine
+    {
+        public static void PlayDisconnect()
+        {
+            PlaySoundFile("low-honor-sound for disconnect.wav");
+        }
+
+        private static void PlaySoundFile(string filename)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    string? path = FindAssetPath(filename);
+                    if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+
+                    using (var audioFile = new AudioFileReader(path))
+                    using (var waveOut = new WaveOutEvent())
+                    {
+                        waveOut.Init(audioFile);
+                        waveOut.Play();
+                        while (waveOut.PlaybackState == PlaybackState.Playing)
+                        {
+                            Thread.Sleep(10);
+                        }
+                    }
+                }
+                catch { }
+            });
+        }
+
+        private static string? FindAssetPath(string filename)
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string path = Path.Combine(baseDir, "assets", filename);
+            if (File.Exists(path)) return path;
+
+            var dir = new DirectoryInfo(baseDir);
+            while (dir != null)
+            {
+                string testPath = Path.Combine(dir.FullName, "assets", filename);
+                if (File.Exists(testPath)) return testPath;
+                testPath = Path.Combine(dir.FullName, filename);
+                if (File.Exists(testPath)) return testPath;
+                dir = dir.Parent;
+            }
+
+            string fallbackPath = Path.Combine(@"C:\Users\sugum\source\repos\SoundSync\assets", filename);
+            if (File.Exists(fallbackPath)) return fallbackPath;
+
+            return null;
         }
     }
 }

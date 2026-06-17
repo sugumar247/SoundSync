@@ -8,68 +8,75 @@
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
-        <!-- Dynamic Brushes for Dark/Light Theme Switching -->
-        <SolidColorBrush x:Key="WindowBgBrush" Color="#121316"/>
-        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#181A1F"/>
-        <SolidColorBrush x:Key="ChannelCardBgBrush" Color="#181A20"/>
-        <SolidColorBrush x:Key="ConsoleBorderBrush" Color="#2A2D35"/>
-        <SolidColorBrush x:Key="TextForegroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#A9AEBB"/>
-        <SolidColorBrush x:Key="TextMutedBrush" Color="#6C727F"/>
-        <SolidColorBrush x:Key="NoDevicesTextBrush" Color="#2A2D35"/>
-        <SolidColorBrush x:Key="ListBoxSeparatorBrush" Color="#1B1E24"/>
-        <SolidColorBrush x:Key="ControlBgBrush" Color="#0B0C0E"/>
-        <SolidColorBrush x:Key="ControlBorderBrush" Color="#25272E"/>
-        <SolidColorBrush x:Key="ThumbBgBrush" Color="#2E3138"/>
-        <SolidColorBrush x:Key="ThumbBorderBrush" Color="#4C505C"/>
-        <SolidColorBrush x:Key="DelayTextBrush" Color="#FFE082"/>
-        <SolidColorBrush x:Key="StatusPanelBgBrush" Color="#090A0C"/>
-        <SolidColorBrush x:Key="ShortcutBgBrush" Color="#1A1D24"/>
-        <SolidColorBrush x:Key="ShortcutKeyBgBrush" Color="#2E323D"/>
-        <SolidColorBrush x:Key="ShortcutKeyShadowBrush" Color="#1A1C23"/>
-        <SolidColorBrush x:Key="BadgeBgBrush" Color="#1C2E24"/>
-        <SolidColorBrush x:Key="BadgeFgBrush" Color="#FF00FF6D"/>
-        <SolidColorBrush x:Key="StatusMutedBrush" Color="#FFC400"/>
-        <SolidColorBrush x:Key="StatusSuccessBrush" Color="#55FF55"/>
-        <SolidColorBrush x:Key="StatusErrorBrush" Color="#FF5555"/>
+        <!-- Red Dead Redemption 2 - Outlaw Dark Theme Brushes -->
+        <LinearGradientBrush x:Key="WindowBgBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#161413" Offset="0.0"/>
+            <GradientStop Color="#0A0909" Offset="1.0"/>
+        </LinearGradientBrush>
+        
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#1B1917"/>
+        <SolidColorBrush x:Key="ChannelCardBgBrush" Color="#24201E"/>
+        <SolidColorBrush x:Key="ConsoleBorderBrush" Color="#3B3530"/>
 
-        <SolidColorBrush x:Key="AccentBlueBrush" Color="#00B0FF"/>
-        <SolidColorBrush x:Key="WarningRedBrush" Color="#FF3D00"/>
+        <SolidColorBrush x:Key="TextForegroundBrush" Color="#EADDC9"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#C2B59D"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#807361"/>
+        <SolidColorBrush x:Key="NoDevicesTextBrush" Color="#3D3732"/>
+        <SolidColorBrush x:Key="ListBoxSeparatorBrush" Color="#2E2824"/>
+        <SolidColorBrush x:Key="ControlBgBrush" Color="#0F0E0D"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#423C37"/>
+        <SolidColorBrush x:Key="ThumbBgBrush" Color="#A80505"/>
+        <SolidColorBrush x:Key="ThumbBorderBrush" Color="#C10B0B"/>
+        <SolidColorBrush x:Key="DelayTextBrush" Color="#DCA462"/>
+        <SolidColorBrush x:Key="StatusPanelBgBrush" Color="#141211"/>
+        <SolidColorBrush x:Key="ShortcutBgBrush" Color="#1C1917"/>
+        <SolidColorBrush x:Key="ShortcutKeyBgBrush" Color="#2C2723"/>
+        <SolidColorBrush x:Key="ShortcutKeyShadowBrush" Color="#0A0909"/>
+        <SolidColorBrush x:Key="BadgeBgBrush" Color="#2D0B0B"/>
+        <SolidColorBrush x:Key="BadgeFgBrush" Color="#FF3E3E"/>
+        <SolidColorBrush x:Key="StatusMutedBrush" Color="#C29F72"/>
+        <SolidColorBrush x:Key="StatusSuccessBrush" Color="#859F6C"/>
+        <SolidColorBrush x:Key="StatusErrorBrush" Color="#A80505"/>
 
-        <!-- Connect Button Theme Brushes -->
-        <SolidColorBrush x:Key="ConnectButtonBgBrush" Color="#0A507A"/>
-        <SolidColorBrush x:Key="ConnectButtonHoverBgBrush" Color="#0E6496"/>
-        <SolidColorBrush x:Key="ConnectButtonBorderBrush" Color="#00B0FF"/>
-        <SolidColorBrush x:Key="ConnectButtonConnectedBgBrush" Color="#B83232"/>
-        <SolidColorBrush x:Key="ConnectButtonConnectedHoverBgBrush" Color="#D63E3E"/>
-        <SolidColorBrush x:Key="ConnectButtonConnectedFgBrush" Color="#00E5FF"/>
+        <SolidColorBrush x:Key="AccentBlueBrush" Color="#A80505"/>
+        <SolidColorBrush x:Key="WarningRedBrush" Color="#C10B0B"/>
 
-        <!-- Header Buttons Style (Pill/Text Icon Buttons) -->
+        <!-- Connect Button - RDR2 Style -->
+        <SolidColorBrush x:Key="ConnectButtonBgBrush" Color="#A80505"/>
+        <SolidColorBrush x:Key="ConnectButtonHoverBgBrush" Color="#C10B0B"/>
+        <SolidColorBrush x:Key="ConnectButtonBorderBrush" Color="#EADDC9"/>
+        <SolidColorBrush x:Key="ConnectButtonConnectedBgBrush" Color="#2D2723"/>
+        <SolidColorBrush x:Key="ConnectButtonConnectedHoverBgBrush" Color="#3D3530"/>
+        <SolidColorBrush x:Key="ConnectButtonConnectedFgBrush" Color="#EADDC9"/>
+
+        <!-- Header Buttons Style -->
         <Style x:Key="HeaderButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource AccentBlueBrush}"/>
-            <Setter Property="Padding" Value="8,5"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Border" 
                                 Background="{TemplateBinding Background}" 
-                                BorderBrush="Transparent" 
-                                BorderThickness="0" 
-                                CornerRadius="4" 
+                                BorderBrush="{DynamicResource ConsoleBorderBrush}" 
+                                BorderThickness="1" 
+                                CornerRadius="0" 
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#1A00B0FF"/>
+                                <Setter TargetName="Border" Property="Background" Value="#15FFFFFF"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBlueBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#3300B0FF"/>
+                                <Setter TargetName="Border" Property="Background" Value="#30FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -77,7 +84,44 @@
             </Setter>
         </Style>
 
-        <!-- Premium Sliders Styles -->
+        <!-- Preset Buttons Style -->
+        <Style x:Key="PresetButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0FFFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ConsoleBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="0" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentBlueBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource WarningRedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rugged Western Sliders -->
         <Style x:Key="ConsoleSliderStyle" TargetType="Slider">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="IsMoveToPointEnabled" Value="True"/>
@@ -90,12 +134,12 @@
                                     BorderBrush="{DynamicResource ControlBorderBrush}"
                                     BorderThickness="1"
                                     Height="4" 
-                                    CornerRadius="2" 
+                                    CornerRadius="0" 
                                     VerticalAlignment="Center" 
-                                    Margin="2,0"/>
+                                    Margin="4,0"/>
                             <Track Name="PART_Track">
                                 <Track.Thumb>
-                                    <Thumb Width="14" Height="22">
+                                    <Thumb Width="12" Height="22">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Grid x:Name="ThumbGrid">
@@ -103,20 +147,22 @@
                                                             Background="{DynamicResource ThumbBgBrush}" 
                                                             BorderBrush="{DynamicResource ThumbBorderBrush}" 
                                                             BorderThickness="1" 
-                                                            CornerRadius="2">
+                                                            CornerRadius="0">
                                                         <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.5" Color="Black"/>
+                                                            <DropShadowEffect BlurRadius="0" ShadowDepth="1" Direction="270" Opacity="0.5" Color="Black"/>
                                                         </Border.Effect>
                                                     </Border>
-                                                    <Rectangle x:Name="Notch" Width="2" Height="14" Fill="#FF3D00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <!-- Simple vertical slit in the middle -->
+                                                    <Rectangle Width="2" Height="14" Fill="#30000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
+                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource WarningRedBrush}"/>
+                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                                                     </Trigger>
                                                     <Trigger Property="IsDragging" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource ControlBgBrush}"/>
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
+                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource WarningRedBrush}"/>
+                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -130,110 +176,13 @@
             </Setter>
         </Style>
 
-        <Style x:Key="DelaySliderStyle" TargetType="Slider">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="IsMoveToPointEnabled" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid>
-                            <Border Name="TrackBackground" 
-                                    Background="{DynamicResource ControlBgBrush}" 
-                                    BorderBrush="{DynamicResource ControlBorderBrush}"
-                                    BorderThickness="1"
-                                    Height="4" 
-                                    CornerRadius="2" 
-                                    VerticalAlignment="Center" 
-                                    Margin="2,0"/>
-                            <Track Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb Width="14" Height="22">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Grid x:Name="ThumbGrid">
-                                                    <Border x:Name="ThumbBorder"
-                                                            Background="{DynamicResource ThumbBgBrush}" 
-                                                            BorderBrush="{DynamicResource ThumbBorderBrush}" 
-                                                            BorderThickness="1" 
-                                                            CornerRadius="2">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.5" Color="Black"/>
-                                                        </Border.Effect>
-                                                    </Border>
-                                                    <Rectangle x:Name="Notch" Width="2" Height="14" Fill="#FFC400" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Grid>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsDragging" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource ControlBgBrush}"/>
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="DelaySliderStyle" TargetType="Slider" BasedOn="{StaticResource ConsoleSliderStyle}">
         </Style>
 
-        <Style x:Key="EqSliderStyle" TargetType="Slider">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="IsMoveToPointEnabled" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid>
-                            <Border Name="TrackBackground" 
-                                    Background="{DynamicResource ControlBgBrush}" 
-                                    BorderBrush="{DynamicResource ControlBorderBrush}"
-                                    BorderThickness="1"
-                                    Height="3" 
-                                    CornerRadius="1.5" 
-                                    VerticalAlignment="Center"/>
-                            <Track Name="PART_Track">
-                                <Track.Thumb>
-                                    <Thumb Width="12" Height="20">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Grid x:Name="ThumbGrid">
-                                                    <Border x:Name="ThumbBorder"
-                                                            Background="{DynamicResource ThumbBgBrush}" 
-                                                            BorderBrush="{DynamicResource ThumbBorderBrush}" 
-                                                            BorderThickness="1" 
-                                                            CornerRadius="2">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.5" Color="Black"/>
-                                                        </Border.Effect>
-                                                    </Border>
-                                                    <Rectangle x:Name="Notch" Width="2" Height="12" Fill="#00B0FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Grid>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsDragging" Value="True">
-                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource ControlBgBrush}"/>
-                                                        <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="EqSliderStyle" TargetType="Slider" BasedOn="{StaticResource ConsoleSliderStyle}">
         </Style>
 
-        <!-- VU Meter ProgressBar Style -->
+        <!-- Gritty Western VU Meter ProgressBar -->
         <Style x:Key="VuMeterStyle" TargetType="ProgressBar">
             <Setter Property="Background" Value="{DynamicResource ControlBgBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
@@ -246,16 +195,16 @@
                             <Border Background="{TemplateBinding Background}" 
                                     BorderBrush="{TemplateBinding BorderBrush}" 
                                     BorderThickness="{TemplateBinding BorderThickness}" 
-                                    CornerRadius="2"/>
+                                    CornerRadius="0"/>
                             <Rectangle x:Name="PART_Track" />
                             <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
                                 <Grid x:Name="IndicatorGrid">
-                                    <Rectangle x:Name="IndicatorRectangle" RadiusX="1" RadiusY="1">
+                                    <Rectangle x:Name="IndicatorRectangle" RadiusX="0" RadiusY="0" Margin="1">
                                         <Rectangle.Fill>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#00E676" Offset="0.0"/>
-                                                <GradientStop Color="#FFD600" Offset="0.8"/>
-                                                <GradientStop Color="#FF1744" Offset="1.0"/>
+                                                <GradientStop Color="#4A0505" Offset="0.0"/>
+                                                <GradientStop Color="#A80505" Offset="0.6"/>
+                                                <GradientStop Color="#DCA462" Offset="1.0"/>
                                             </LinearGradientBrush>
                                         </Rectangle.Fill>
                                     </Rectangle>
@@ -267,7 +216,7 @@
             </Setter>
         </Style>
 
-        <!-- Checkbox Indicator Style -->
+        <!-- Gritty Western Checkbox -->
         <Style x:Key="HardwareCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
             <Setter Property="FontSize" Value="13"/>
@@ -276,28 +225,30 @@
                     <ControlTemplate TargetType="CheckBox">
                         <BulletDecorator Background="Transparent" Cursor="Hand">
                             <BulletDecorator.Bullet>
-                                <Grid Width="16" Height="16">
+                                <Grid Width="18" Height="18">
                                     <Border x:Name="Border" 
                                             Background="{DynamicResource ControlBgBrush}" 
                                             BorderBrush="{DynamicResource ConsoleBorderBrush}" 
                                             BorderThickness="1.5" 
-                                            CornerRadius="3" />
+                                            CornerRadius="0" />
+                                    <!-- A bold solid block check -->
                                     <Border x:Name="CheckMark" 
-                                            Width="8" Height="8" 
-                                            Background="#00E676" 
-                                            CornerRadius="1.5"
-                                            Visibility="Collapsed"/>
+                                            Width="10" Height="10" 
+                                            Background="{DynamicResource AccentBlueBrush}" 
+                                            CornerRadius="0"
+                                            Visibility="Collapsed">
+                                    </Border>
                                 </Grid>
                             </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </BulletDecorator>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="true">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#00E676"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextMutedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -305,24 +256,21 @@
             </Setter>
         </Style>
 
-        <!-- Channel Card ListBoxItem Style (Bento Card Style) -->
+        <!-- RDR2 Channel Card Style -->
         <Style x:Key="ChannelCardStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="{DynamicResource ChannelCardBgBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ConsoleBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12,14"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="16,16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="6"
+                                CornerRadius="0"
                                 Padding="{TemplateBinding Padding}">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="6" ShadowDepth="1.5" Direction="270" Opacity="0.08" Color="Black"/>
-                            </Border.Effect>
                             <ContentPresenter/>
                         </Border>
                     </ControlTemplate>
@@ -330,21 +278,22 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
+                    <Setter Property="Background" Value="#0FFFFFFF"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource DelayTextBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Simplified Connect Button Style (Dynamic Resource & Tag Driven) -->
+        <!-- Heavy Duty Connect Button -->
         <Style x:Key="ConnectButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ConnectButtonBgBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ConnectButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1.5"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Height" Value="45"/>
+            <Setter Property="Height" Value="50"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -353,9 +302,9 @@
                                 Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="6">
+                                CornerRadius="0">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1.5" Direction="270" Opacity="0.2" Color="Black"/>
+                                <DropShadowEffect BlurRadius="0" ShadowDepth="2" Direction="270" Opacity="0.5" Color="Black"/>
                             </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -363,14 +312,13 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <!-- Normal Hover (No Tag or Disconnected) -->
                 <MultiTrigger>
                     <MultiTrigger.Conditions>
                         <Condition Property="IsMouseOver" Value="True"/>
                         <Condition Property="Tag" Value="{x:Null}"/>
                     </MultiTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource ConnectButtonHoverBgBrush}"/>
-                    <Setter Property="BorderBrush" Value="#00E5FF"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                 </MultiTrigger>
                 <MultiTrigger>
                     <MultiTrigger.Conditions>
@@ -378,22 +326,20 @@
                         <Condition Property="Tag" Value="Disconnected"/>
                     </MultiTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource ConnectButtonHoverBgBrush}"/>
-                    <Setter Property="BorderBrush" Value="#00E5FF"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                 </MultiTrigger>
-                <!-- Connected State -->
                 <Trigger Property="Tag" Value="Connected">
                     <Setter Property="Background" Value="{DynamicResource ConnectButtonConnectedBgBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource ConsoleBorderBrush}"/>
                     <Setter Property="Foreground" Value="{DynamicResource ConnectButtonConnectedFgBrush}"/>
                 </Trigger>
-                <!-- Connected Hover -->
                 <MultiTrigger>
                     <MultiTrigger.Conditions>
                         <Condition Property="IsMouseOver" Value="True"/>
                         <Condition Property="Tag" Value="Connected"/>
                     </MultiTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource ConnectButtonConnectedHoverBgBrush}"/>
-                    <Setter Property="BorderBrush" Value="#00FFFF"/>
-                    <Setter Property="Foreground" Value="#00FFFF"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource TextForegroundBrush}"/>
                 </MultiTrigger>
             </Style.Triggers>
         </Style>
@@ -410,12 +356,12 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,15">
-            <Border BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="0,0,0,1" Padding="0,0,0,10">
+            <Border BorderBrush="{DynamicResource AccentBlueBrush}" BorderThickness="0,0,0,2" Padding="0,0,0,10">
                 <Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Background="Transparent">
-                        <TextBlock Text="SOUNDSYNC" FontSize="20" FontWeight="Black" Foreground="{DynamicResource TextForegroundBrush}"/>
-                        <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="3" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="V1.1.3" Foreground="{DynamicResource BadgeFgBrush}" FontSize="10" FontFamily="Consolas" FontWeight="Bold"/>
+                        <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="Chinese Rocks Rg, Georgia" Foreground="{DynamicResource TextForegroundBrush}"/>
+                        <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="0" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold"/>
                         </Border>
                     </StackPanel>
 
@@ -428,7 +374,7 @@
                                       Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
                                       Data="M9,2C7.95,2 6.95,2.23 6.05,2.63C9,3.87 11,6.7 11,10C11,13.3 9,16.13 6.05,17.37C6.95,17.77 7.95,18 9,18A8,8 0 0,0 17,10A8,8 0 0,0 9,2Z"
                                       Margin="0,0,6,0"/>
-                                <TextBlock x:Name="ThemeButtonText" Text="DARK MODE" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="ThemeButtonText" Text="FRONTIER MODE" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="RefreshButton" Style="{StaticResource HeaderButtonStyle}" Click="RefreshButton_Click">
@@ -456,28 +402,28 @@
                 <ColumnDefinition Width="65"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
-            <TextBlock Text="SIGNAL" Grid.Column="1" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="VOLUME" Grid.Column="2" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="DELAY" Grid.Column="3" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="LATENCY" Grid.Column="4" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
+            <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
+            <TextBlock Text="SIGNAL" Grid.Column="1" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="VOLUME" Grid.Column="2" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="DELAY" Grid.Column="3" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="LATENCY" Grid.Column="4" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
         </Grid>
 
-        <Border Grid.Row="2" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8">
+        <Border Grid.Row="2" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1.5" CornerRadius="0" Padding="8">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Direction="270" Opacity="0.12" Color="Black"/>
+                <DropShadowEffect BlurRadius="0" ShadowDepth="2" Direction="270" Opacity="0.5" Color="Black"/>
             </Border.Effect>
             <Grid>
                 <!-- Transparent Watermark Logo Background -->
                 <Image Source="logo.png" 
-                       Opacity="0.02" 
+                       Opacity="0.015" 
                        Width="150" Height="150" 
                        HorizontalAlignment="Center" 
                        VerticalAlignment="Center" 
                        IsHitTestVisible="False" 
                        Panel.ZIndex="0"/>
 
-                <TextBlock Text="NO DEVICES DETECTED" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="24" FontWeight="Black" FontFamily="Consolas" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.5">
+                <TextBlock Text="NO OUTLAWS IN RANGE" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="26" FontWeight="Bold" FontFamily="Chinese Rocks Rg, Georgia" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.4">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -491,10 +437,10 @@
                 </TextBlock>
 
                 <ListBox x:Name="DeviceListBox" Background="Transparent" BorderThickness="0" 
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         HorizontalContentAlignment="Stretch" Panel.ZIndex="2"
-                         ItemContainerStyle="{StaticResource ChannelCardStyle}">
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          HorizontalContentAlignment="Stretch" Panel.ZIndex="2"
+                          ItemContainerStyle="{StaticResource ChannelCardStyle}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
@@ -514,7 +460,7 @@
 
                                     <ProgressBar Value="{Binding PeakLevel, Mode=OneWay}" 
                                                  Style="{StaticResource VuMeterStyle}" 
-                                                 Height="10" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"/>
+                                                 Height="8" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"/>
 
                                     <Slider Grid.Column="2" Minimum="0" Maximum="1" Value="{Binding Volume}" 
                                             Style="{StaticResource ConsoleSliderStyle}"
@@ -525,7 +471,7 @@
                                             VerticalAlignment="Center" Margin="12,0"/>
 
                                     <TextBlock Grid.Column="4" Text="{Binding Delay, StringFormat={}{0}ms}" 
-                                               FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource DelayTextBrush}" 
+                                               FontFamily="Chinese Rocks Rg, Georgia" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource DelayTextBrush}" 
                                                VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
 
@@ -533,29 +479,44 @@
                                         BorderBrush="{DynamicResource ConsoleBorderBrush}" 
                                         BorderThickness="1" 
                                         Background="{DynamicResource ControlBgBrush}" 
-                                        CornerRadius="4" 
+                                        CornerRadius="0" 
                                         Padding="8,8">
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
 
-                                        <TextBlock Text="BASS" Grid.Column="0" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
-                                        <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
-                                                Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
+                                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <TextBlock Text="MID" Grid.Column="2" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
-                                        <Slider Grid.Column="3" Minimum="-12" Maximum="12" Value="{Binding Mid}" 
-                                                Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
+                                            <TextBlock Text="BASS" Grid.Column="0" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
+                                                    Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                        <TextBlock Text="TREBLE" Grid.Column="4" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
-                                        <Slider Grid.Column="5" Minimum="-12" Maximum="12" Value="{Binding Treble}" 
-                                                Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Text="MID" Grid.Column="2" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <Slider Grid.Column="3" Minimum="-12" Maximum="12" Value="{Binding Mid}" 
+                                                    Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
+
+                                            <TextBlock Text="TREBLE" Grid.Column="4" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <Slider Grid.Column="5" Minimum="-12" Maximum="12" Value="{Binding Treble}" 
+                                                    Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        </Grid>
+
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                            <TextBlock Text="OUTLAW PRESETS:" FontSize="10" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Button Content="CAMPFIRE ACOUSTICS" Tag="Campfire" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="GUNSLINGER ACTION" Tag="Gunslinger" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="SALOON RAGTIME" Tag="Saloon" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="RESET FLAT" Tag="Reset" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
                             </StackPanel>
@@ -565,43 +526,43 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="3" Background="{DynamicResource StatusPanelBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="3" Margin="0,15,0,15" Padding="12,8">
+        <Border Grid.Row="3" Background="{DynamicResource StatusPanelBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Margin="0,15,0,15" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="MONITOR_LOG >" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="MONITOR_LOG >" FontFamily="Chinese Rocks Rg, Georgia" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Text="Status: Disconnected" Grid.Column="1" Margin="10,0,0,0"
-                           FontFamily="Consolas" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
+                           FontFamily="Chinese Rocks Rg, Georgia" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
-        <Button x:Name="ConnectButton" Content="ENGAGE SOUNDSYNC SYSTEM" Grid.Row="4" Height="45"
+        <Button x:Name="ConnectButton" Content="ACTIVATE SOUNDSYNC CONSOLE" Grid.Row="4" Height="48"
                 Style="{StaticResource ConnectButtonStyle}" Click="ConnectButton_Click" BorderBrush="{x:Null}">
             <Button.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="3" Direction="270" Opacity="0.15" Color="Black"/>
+                <DropShadowEffect BlurRadius="0" ShadowDepth="3" Direction="270" Opacity="0.5" Color="Black"/>
             </Button.Effect>
         </Button>
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-            <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="Consolas" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
-            <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="6,3" Margin="0,0,12,0">
+            <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3" Margin="0,0,12,0">
                 <StackPanel Orientation="Horizontal">
-                    <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="4" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Consolas" FontSize="10" FontWeight="Bold"/>
+                    <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Toggle Connect" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" FontSize="10" VerticalAlignment="Center"/>
+                    <TextBlock Text="Toggle Connect" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
-            <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="6,3">
+            <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3">
                 <StackPanel Orientation="Horizontal">
-                    <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="4" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Consolas" FontSize="10" FontWeight="Bold"/>
+                    <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Mute Channels" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" FontSize="10" VerticalAlignment="Center"/>
+                    <TextBlock Text="Mute Channels" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>
