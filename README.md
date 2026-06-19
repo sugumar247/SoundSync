@@ -31,14 +31,10 @@
 </p>
 
 
+<img width="996" height="859" alt="SoundSync Red dead Edition(dark)" src="https://github.com/user-attachments/assets/ddebfa3e-aaeb-4e9c-a719-ff08a172a780" />
+<img width="991" height="855" alt="SoundSync Red dead Edition(light)" src="https://github.com/user-attachments/assets/e76ec91a-c8cd-4c0c-b2b5-80a3b0294b08" />
 
-
-https://github.com/user-attachments/assets/7e680581-0e50-4631-ad1e-4b22fc06a5c8
-
-
-
-
-https://github.com/user-attachments/assets/e2ad3c7d-e199-4517-95cb-572a3b1ab28f
+<img width="1920" height="894" alt="Screenshot (19)" src="https://github.com/user-attachments/assets/a9297c49-3057-4618-b716-a896aa24257f" />
 
 
 
