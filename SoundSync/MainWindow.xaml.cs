@@ -91,6 +91,30 @@ namespace SoundSync
             }
         }
 
+        private void Slider_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.Slider slider) return;
+
+            double step;
+
+            // Volume slider: 0 to 1  → 2% per tick
+            if (slider.Minimum >= 0 && slider.Maximum <= 1)
+                step = 0.02;
+            // Delay slider: -200 to 200 → 5ms per tick
+            else if (slider.Maximum >= 100)
+                step = 5;
+            // EQ sliders: -12 to 12 → 0.5dB per tick
+            else
+                step = 0.5;
+
+            slider.Value = Math.Clamp(
+                slider.Value + (e.Delta > 0 ? step : -step),
+                slider.Minimum,
+                slider.Maximum);
+
+            e.Handled = true; // prevent ListView from scrolling
+        }
+
         private void ToggleMute()
         {
             if (!isConnected) return;
