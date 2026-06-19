@@ -36,6 +36,7 @@ namespace SoundSync
 
         // SoundSync Link Wi-Fi Stream Server
         private SoundSyncLinkServer? linkServer;
+        private string currentStreamUrl = string.Empty;
 
         // Default device peak level tracking timer
         private System.Windows.Threading.DispatcherTimer? defaultDevicePeakTimer;
@@ -142,12 +143,12 @@ namespace SoundSync
 
             if (isMuted)
             {
-                StatusText.Text = "Status: MUTED (Press M to Unmute)";
+                StatusText.Text = string.IsNullOrEmpty(currentStreamUrl) ? "Status: MUTED (Press M to Unmute)" : $"Streaming: {currentStreamUrl} | MUTED (Press M to Unmute)";
                 StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusMutedBrush");
             }
             else
             {
-                StatusText.Text = "Status: Connected and Routing Audio!";
+                StatusText.Text = string.IsNullOrEmpty(currentStreamUrl) ? "Status: Connected and Routing Audio!" : $"Streaming: {currentStreamUrl} | Routing Audio!";
                 StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
             }
         }
@@ -562,7 +563,8 @@ namespace SoundSync
                 ConnectButton.Content = "DISCONNECT";
                 ConnectButton.Tag = "Connected";
 
-                StatusText.Text = $"Streaming: http://{ip}:{port} | Routing Audio!";
+                currentStreamUrl = $"http://{ip}:{port}";
+                StatusText.Text = $"Streaming: {currentStreamUrl} | Routing Audio!";
                 StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
 
                 SaveCurrentProfile();
@@ -622,11 +624,11 @@ namespace SoundSync
 
             isConnected = false;
             isMuted = false;
+            currentStreamUrl = string.Empty;
             ConnectButton.Content = "ACTIVATE SOUNDSYNC CONSOLE";
             ConnectButton.Tag = "Disconnected";
             StatusText.Text = "Status: Disconnected";
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusErrorBrush");
-            OutlawSfxEngine.PlayDisconnect();
         }
 
         public void UpdateRelativeDelays()
@@ -1761,57 +1763,4 @@ namespace SoundSync
         }
     }
 
-    public static class OutlawSfxEngine
-    {
-        public static void PlayDisconnect()
-        {
-            PlaySoundFile("low-honor-sound for disconnect.wav");
-        }
-
-        private static void PlaySoundFile(string filename)
-        {
-            Task.Run(() =>
-            {
-                try
-                {
-                    string? path = FindAssetPath(filename);
-                    if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
-
-                    using (var audioFile = new AudioFileReader(path))
-                    using (var waveOut = new WaveOutEvent())
-                    {
-                        waveOut.Init(audioFile);
-                        waveOut.Play();
-                        while (waveOut.PlaybackState == PlaybackState.Playing)
-                        {
-                            Thread.Sleep(10);
-                        }
-                    }
-                }
-                catch { }
-            });
-        }
-
-        private static string? FindAssetPath(string filename)
-        {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string path = Path.Combine(baseDir, "assets", filename);
-            if (File.Exists(path)) return path;
-
-            var dir = new DirectoryInfo(baseDir);
-            while (dir != null)
-            {
-                string testPath = Path.Combine(dir.FullName, "assets", filename);
-                if (File.Exists(testPath)) return testPath;
-                testPath = Path.Combine(dir.FullName, filename);
-                if (File.Exists(testPath)) return testPath;
-                dir = dir.Parent;
-            }
-
-            string fallbackPath = Path.Combine(@"C:\Users\sugum\source\repos\SoundSync\assets", filename);
-            if (File.Exists(fallbackPath)) return fallbackPath;
-
-            return null;
-        }
-    }
 }
