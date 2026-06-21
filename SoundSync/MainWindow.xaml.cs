@@ -73,9 +73,66 @@ namespace SoundSync
             ApplyTheme(false);
         }
 
+        private string latestReleaseUrl = "https://github.com/sugumar247/SoundSync/releases";
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             LoadSavedProfile();
+            CheckForUpdatesAsync();
+        }
+
+        private async void CheckForUpdatesAsync()
+        {
+            try
+            {
+                using var client = new System.Net.Http.HttpClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("SoundSync-Client");
+
+                string responseJson = await client.GetStringAsync("https://api.github.com/repos/sugumar247/SoundSync/releases/latest");
+                
+                using var doc = JsonDocument.Parse(responseJson);
+                if (doc.RootElement.TryGetProperty("tag_name", out var tagProperty))
+                {
+                    string tag = tagProperty.GetString()?.Trim().TrimStart('v', 'V') ?? "";
+                    if (Version.TryParse(tag, out var latestVersion))
+                    {
+                        var currentVersion = typeof(MainWindow).Assembly.GetName().Version;
+                        if (currentVersion != null && latestVersion > currentVersion)
+                        {
+                            if (doc.RootElement.TryGetProperty("html_url", out var urlProperty))
+                            {
+                                latestReleaseUrl = urlProperty.GetString() ?? latestReleaseUrl;
+                            }
+                            
+                            Dispatcher.Invoke(() =>
+                            {
+                                UpdateText.Text = $"A NEW UPDATE (v{tag}) IS AVAILABLE FOR SOUNDSYNC!";
+                                UpdateBanner.Visibility = Visibility.Visible;
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}");
+            }
+        }
+
+        private void UpdateDownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = latestReleaseUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to open release URL: {ex.Message}");
+            }
         }
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -101,9 +158,9 @@ namespace SoundSync
             // Volume slider: 0 to 1  → 2% per tick
             if (slider.Minimum >= 0 && slider.Maximum <= 1)
                 step = 0.02;
-            // Delay slider: -200 to 200 → 5ms per tick
+            // Delay slider: -3000 to 3000 → 10ms per tick
             else if (slider.Maximum >= 100)
-                step = 5;
+                step = 10;
             // EQ sliders: -12 to 12 → 0.5dB per tick
             else
                 step = 0.5;

@@ -348,12 +348,13 @@
 
     <Grid Margin="20" Grid.IsSharedSizeScope="True">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- Row 0: Header -->
+            <RowDefinition Height="Auto"/> <!-- Row 1: Update Notification Banner -->
+            <RowDefinition Height="Auto"/> <!-- Row 2: Labels -->
+            <RowDefinition Height="*"/>    <!-- Row 3: ListBox -->
+            <RowDefinition Height="Auto"/> <!-- Row 4: Status Panel -->
+            <RowDefinition Height="Auto"/> <!-- Row 5: Connect Button -->
+            <RowDefinition Height="Auto"/> <!-- Row 6: Shortcuts -->
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,15">
@@ -394,13 +395,29 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="15,0,15,8">
+        <!-- Update Notification Banner (Hidden by default) -->
+        <Border x:Name="UpdateBanner" Grid.Row="1" Background="{DynamicResource BadgeBgBrush}" BorderBrush="{DynamicResource AccentBlueBrush}" BorderThickness="1" Padding="12,8" Margin="0,0,0,15" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="M11,15H13V17H11V15M11,7H13V13H11V7M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20Z"
+                          Fill="{DynamicResource BadgeFgBrush}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="UpdateText" Text="A NEW UPDATE IS AVAILABLE FOR SOUNDSYNC!" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Button Grid.Column="1" x:Name="UpdateDownloadButton" Content="DOWNLOAD UPDATE" Click="UpdateDownloadButton_Click" Style="{StaticResource PresetButtonStyle}" Background="{DynamicResource ConnectButtonBgBrush}" Foreground="{DynamicResource TextForegroundBrush}" BorderBrush="{DynamicResource ConnectButtonBorderBrush}" Padding="15,4"/>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="15,0,15,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*"/>
                 <ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="120"/>
-                <ColumnDefinition Width="120"/>
-                <ColumnDefinition Width="65"/>
+                <ColumnDefinition Width="110"/>
+                <ColumnDefinition Width="75"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
@@ -410,7 +427,7 @@
             <TextBlock Text="LATENCY" Grid.Column="4" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
         </Grid>
 
-        <Border Grid.Row="2" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1.5" CornerRadius="0" Padding="8">
+        <Border Grid.Row="3" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1.5" CornerRadius="0" Padding="8">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="0" ShadowDepth="2" Direction="270" Opacity="0.5" Color="Black"/>
             </Border.Effect>
@@ -451,8 +468,8 @@
                                         <ColumnDefinition Width="3*"/>
                                         <ColumnDefinition Width="80"/>
                                         <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="65"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="75"/>
                                     </Grid.ColumnDefinitions>
 
                                     <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
@@ -468,7 +485,7 @@
                                             Style="{StaticResource ConsoleSliderStyle}"
                                             VerticalAlignment="Center" Margin="12,0"/>
 
-                                    <Slider Grid.Column="3" Minimum="-200" Maximum="200" Value="{Binding Delay}" 
+                                    <Slider Grid.Column="3" Minimum="-3000" Maximum="3000" Value="{Binding Delay}" 
                                             Style="{StaticResource DelaySliderStyle}"
                                             VerticalAlignment="Center" Margin="12,0"/>
 
@@ -528,7 +545,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="3" Background="{DynamicResource StatusPanelBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Margin="0,15,0,15" Padding="12,8">
+        <Border Grid.Row="4" Background="{DynamicResource StatusPanelBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Margin="0,15,0,15" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -540,14 +557,14 @@
             </Grid>
         </Border>
 
-        <Button x:Name="ConnectButton" Content="ACTIVATE SOUNDSYNC CONSOLE" Grid.Row="4" Height="48"
+        <Button x:Name="ConnectButton" Content="ACTIVATE SOUNDSYNC CONSOLE" Grid.Row="5" Height="48"
                 Style="{StaticResource ConnectButtonStyle}" Click="ConnectButton_Click" BorderBrush="{x:Null}">
             <Button.Effect>
                 <DropShadowEffect BlurRadius="0" ShadowDepth="3" Direction="270" Opacity="0.5" Color="Black"/>
             </Button.Effect>
         </Button>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
             <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
             <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3" Margin="0,0,12,0">
