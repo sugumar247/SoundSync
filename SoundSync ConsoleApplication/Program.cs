@@ -25,7 +25,7 @@ namespace VirtualAudioMixer
 
             // 2. USER SELECTION
             Console.Write("\nEnter the numbers of the devices you want to broadcast to (e.g. 1,2): ");
-            string input = Console.ReadLine();
+            string? input = Console.ReadLine();
 
             var selectedIndices = input?.Split(',')
                 .Select(s => s.Trim())
@@ -168,7 +168,7 @@ namespace VirtualAudioMixer
                     outputStream.Dispose();
                 }
 
-                Console.WriteLine("Donqe. Press any key to exit.");
+                Console.WriteLine("Done. Press any key to exit.");
                 Console.ReadKey();
             }
         }
