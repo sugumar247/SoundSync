@@ -6,7 +6,6 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
-		<UseWindowsForms>true</UseWindowsForms>
 
 		<Version>1.1.5</Version>
 		<AssemblyVersion>1.1.5.0</AssemblyVersion>
@@ -14,9 +13,10 @@
 
 		<ApplicationIcon>logo.ico</ApplicationIcon>
 		<PublishSingleFile>true</PublishSingleFile>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 		<SelfContained>true</SelfContained>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
-		<ReadyToRun>true</ReadyToRun>
+		<ReadyToRun>false</ReadyToRun>
 		<IncludeSymbols>false</IncludeSymbols>
 	</PropertyGroup>
 
@@ -26,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
 		<PackageReference Include="NAudio" Version="2.3.0" />
 	</ItemGroup>
 

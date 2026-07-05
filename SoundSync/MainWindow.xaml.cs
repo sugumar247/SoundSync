@@ -42,7 +42,7 @@ namespace SoundSync
         private System.Windows.Threading.DispatcherTimer? defaultDevicePeakTimer;
 
         // System Tray Components
-        private System.Windows.Forms.NotifyIcon? notifyIcon;
+        private Hardcodet.Wpf.TaskbarNotification.TaskbarIcon? notifyIcon;
 
         // Settings Profile Path (Updated to ensure compatibility with Self-Contained Single-File Executables)
         private readonly string profilePath = Path.Combine(
@@ -212,53 +212,39 @@ namespace SoundSync
 
         private void InitializeNotifyIcon()
         {
-            notifyIcon = new System.Windows.Forms.NotifyIcon();
-            notifyIcon.Text = "SoundSync";
+            notifyIcon = new Hardcodet.Wpf.TaskbarNotification.TaskbarIcon();
+            notifyIcon.ToolTipText = "SoundSync";
 
             try
             {
-                var iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/logo.png"))?.Stream;
-                if (iconStream != null)
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        iconStream.CopyTo(ms);
-                        using (var bmp = new System.Drawing.Bitmap(ms))
-                        {
-                            notifyIcon.Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
-                        }
-                    }
-                }
-                else
-                {
-                    notifyIcon.Icon = System.Drawing.SystemIcons.Application;
-                }
+                notifyIcon.IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/logo.ico"));
             }
-            catch
-            {
-                notifyIcon.Icon = System.Drawing.SystemIcons.Application;
-            }
+            catch { }
 
-            notifyIcon.Visible = true;
-            notifyIcon.DoubleClick += (s, e) =>
+            notifyIcon.TrayMouseDoubleClick += (s, e) =>
             {
                 Show();
                 WindowState = WindowState.Normal;
                 Activate();
             };
 
-            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-            contextMenu.Items.Add("Open SoundSync", null, (s, e) =>
+            var contextMenu = new System.Windows.Controls.ContextMenu();
+            var openItem = new System.Windows.Controls.MenuItem { Header = "Open SoundSync" };
+            openItem.Click += (s, e) =>
             {
                 Show();
                 WindowState = WindowState.Normal;
                 Activate();
-            });
-            contextMenu.Items.Add("Exit", null, (s, e) =>
+            };
+            var exitItem = new System.Windows.Controls.MenuItem { Header = "Exit" };
+            exitItem.Click += (s, e) =>
             {
                 System.Windows.Application.Current.Shutdown();
-            });
-            notifyIcon.ContextMenuStrip = contextMenu;
+            };
+            contextMenu.Items.Add(openItem);
+            contextMenu.Items.Add(exitItem);
+
+            notifyIcon.ContextMenu = contextMenu;
         }
 
         private void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -266,7 +252,7 @@ namespace SoundSync
             if (WindowState == WindowState.Minimized && notifyIcon != null)
             {
                 Hide();
-                notifyIcon.ShowBalloonTip(2000, "SoundSync", "SoundSync is running in the system tray.", System.Windows.Forms.ToolTipIcon.Info);
+                notifyIcon.ShowBalloonTip("SoundSync", "SoundSync is running in the system tray.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
             }
         }
 
@@ -827,7 +813,7 @@ namespace SoundSync
 
             if (notifyIcon != null)
             {
-                notifyIcon.Visible = false;
+                notifyIcon.Visibility = Visibility.Collapsed;
                 notifyIcon.Dispose();
             }
             base.OnClosed(e);
