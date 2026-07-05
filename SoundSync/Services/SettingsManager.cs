@@ -12,11 +12,13 @@ namespace SoundSync.Services
 
         public SettingsManager(string? customProfilePath = null)
         {
-            _profilePath = customProfilePath ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "SoundSync",
-                "settings_profile.json"
-            );
+            _profilePath = string.IsNullOrWhiteSpace(customProfilePath)
+                ? Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SoundSync",
+                    "settings_profile.json"
+                  )
+                : customProfilePath;
 
             try
             {

@@ -49,5 +49,40 @@ namespace SoundSync.Tests
                 }
             }
         }
+
+        [Fact]
+        public void LoadProfile_WhenFileDoesNotExist_ReturnsEmptyList()
+        {
+            string nonExistentPath = Path.Combine(Path.GetTempPath(), System.Guid.NewGuid().ToString() + ".json");
+            var manager = new SettingsManager(nonExistentPath);
+
+            var result = manager.LoadProfile();
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void LoadProfile_WhenFileIsCorrupted_ReturnsEmptyList()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(tempFile, "{ invalid json }");
+                var manager = new SettingsManager(tempFile);
+
+                var result = manager.LoadProfile();
+
+                Assert.NotNull(result);
+                Assert.Empty(result);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+            }
+        }
     }
 }
