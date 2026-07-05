@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VirtualAudioMixer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b44e5992528297aba245a5224c0bb7802cdc0530")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+255c75a0a06f3438922379dd6434dd74c99f0f86")]
 [assembly: System.Reflection.AssemblyProductAttribute("VirtualAudioMixer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VirtualAudioMixer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
