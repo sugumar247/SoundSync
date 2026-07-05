@@ -1,13 +1,23 @@
 using Xunit;
+using SoundSync.Models;
 
 namespace SoundSync.Tests
 {
-    public class SettingsManagerTests
+    public class DeviceItemTests
     {
         [Fact]
-        public void FailingPlaceholderTest()
+        public void DelayChange_TriggersCallback()
         {
-            Assert.True(true);
+            bool callbackCalled = false;
+            var item = new DeviceItem
+            {
+                DelayChangedCallback = () => callbackCalled = true
+            };
+
+            item.Delay = 100;
+
+            Assert.True(callbackCalled);
+            Assert.Equal(100, item.Delay);
         }
     }
 }
