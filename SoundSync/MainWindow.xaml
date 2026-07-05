@@ -54,7 +54,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
             <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
+            <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="FontSize" Value="17"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -91,7 +91,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ConsoleBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
+            <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -221,6 +221,7 @@
         <Style x:Key="HardwareCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -367,14 +368,21 @@
         <Grid Grid.Row="0" Margin="0,0,0,15">
             <Border BorderBrush="{DynamicResource AccentBlueBrush}" BorderThickness="0,0,0,2" Padding="0,0,0,10">
                 <Grid>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Background="Transparent">
-                        <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" Foreground="{DynamicResource TextForegroundBrush}"/>
-                        <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="0" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold"/>
-                        </Border>
-                    </StackPanel>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Viewbox Grid.Column="0" HorizontalAlignment="Left" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" Foreground="{DynamicResource TextForegroundBrush}"/>
+                            <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="0" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                    </Viewbox>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button x:Name="ThemeButton" Style="{StaticResource HeaderButtonStyle}" Click="ThemeButton_Click" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
                                 <Path x:Name="ThemeIconPath" 
