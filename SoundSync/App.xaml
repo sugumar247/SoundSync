@@ -1,9 +1,10 @@
-﻿<Application x:Class="SoundSync.App"
+<Application x:Class="SoundSync.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:SoundSync"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!-- Embedded font: ships with the app, works on every machine -->
+        <FontFamily x:Key="OutlawFont">pack://application:,,,/Fonts/#Chinese Rocks Rg</FontFamily>
     </Application.Resources>
 </Application>

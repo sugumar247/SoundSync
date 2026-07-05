@@ -241,7 +241,14 @@
                                     </Border>
                                 </Grid>
                             </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        <Setter Property="TextWrapping" Value="NoWrap"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </BulletDecorator>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="true">
@@ -292,7 +299,7 @@
             <Setter Property="BorderThickness" Value="1.5"/>
             <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontFamily" Value="Chinese Rocks Rg, Georgia"/>
+            <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Height" Value="50"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -361,9 +368,9 @@
             <Border BorderBrush="{DynamicResource AccentBlueBrush}" BorderThickness="0,0,0,2" Padding="0,0,0,10">
                 <Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Background="Transparent">
-                        <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="Chinese Rocks Rg, Georgia" Foreground="{DynamicResource TextForegroundBrush}"/>
+                        <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" Foreground="{DynamicResource TextForegroundBrush}"/>
                         <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="0" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold"/>
+                            <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold"/>
                         </Border>
                     </StackPanel>
 
@@ -405,7 +412,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Path Data="M11,15H13V17H11V15M11,7H13V13H11V7M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20Z"
                           Fill="{DynamicResource BadgeFgBrush}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="UpdateText" Text="A NEW UPDATE IS AVAILABLE FOR SOUNDSYNC!" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="UpdateText" Text="A NEW UPDATE IS AVAILABLE FOR SOUNDSYNC!" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
                 <Button Grid.Column="1" x:Name="UpdateDownloadButton" Content="DOWNLOAD UPDATE" Click="UpdateDownloadButton_Click" Style="{StaticResource PresetButtonStyle}" Background="{DynamicResource ConnectButtonBgBrush}" Foreground="{DynamicResource TextForegroundBrush}" BorderBrush="{DynamicResource ConnectButtonBorderBrush}" Padding="15,4"/>
             </Grid>
@@ -413,18 +420,18 @@
 
         <Grid Grid.Row="2" Margin="15,0,15,8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*"/>
-                <ColumnDefinition Width="80"/>
-                <ColumnDefinition Width="120"/>
-                <ColumnDefinition Width="110"/>
-                <ColumnDefinition Width="75"/>
+                <ColumnDefinition Width="3*" MinWidth="80"/>
+                <ColumnDefinition Width="80" MinWidth="60"/>
+                <ColumnDefinition Width="120" MinWidth="80"/>
+                <ColumnDefinition Width="110" MinWidth="70"/>
+                <ColumnDefinition Width="75" MinWidth="55"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
-            <TextBlock Text="SIGNAL" Grid.Column="1" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="VOLUME" Grid.Column="2" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="DELAY" Grid.Column="3" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="LATENCY" Grid.Column="4" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
+            <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
+            <TextBlock Text="SIGNAL" Grid.Column="1" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="VOLUME" Grid.Column="2" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="DELAY" Grid.Column="3" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="LATENCY" Grid.Column="4" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
         </Grid>
 
         <Border Grid.Row="3" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1.5" CornerRadius="0" Padding="8">
@@ -441,7 +448,7 @@
                        IsHitTestVisible="False" 
                        Panel.ZIndex="0"/>
 
-                <TextBlock Text="NO OUTLAWS IN RANGE" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="26" FontWeight="Bold" FontFamily="Chinese Rocks Rg, Georgia" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.4">
+                <TextBlock Text="NO OUTLAWS IN RANGE" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="26" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.4">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -465,11 +472,11 @@
                             <StackPanel>
                                 <Grid Margin="5,0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="110"/>
-                                        <ColumnDefinition Width="75"/>
+                                        <ColumnDefinition Width="3*" MinWidth="80"/>
+                                        <ColumnDefinition Width="80" MinWidth="60"/>
+                                        <ColumnDefinition Width="120" MinWidth="80"/>
+                                        <ColumnDefinition Width="110" MinWidth="70"/>
+                                        <ColumnDefinition Width="75" MinWidth="55"/>
                                     </Grid.ColumnDefinitions>
 
                                     <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
@@ -490,7 +497,7 @@
                                             VerticalAlignment="Center" Margin="12,0"/>
 
                                     <TextBlock Grid.Column="4" Text="{Binding Delay, StringFormat={}{0}ms}" 
-                                               FontFamily="Chinese Rocks Rg, Georgia" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource DelayTextBrush}" 
+                                               FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource DelayTextBrush}" 
                                                VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
 
@@ -516,21 +523,21 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <TextBlock Text="BASS" Grid.Column="0" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="BASS" Grid.Column="0" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                            <TextBlock Text="MID" Grid.Column="2" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="MID" Grid.Column="2" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="3" Minimum="-12" Maximum="12" Value="{Binding Mid}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                            <TextBlock Text="TREBLE" Grid.Column="4" FontSize="12" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="TREBLE" Grid.Column="4" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="5" Minimum="-12" Maximum="12" Value="{Binding Treble}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                         </Grid>
 
                                         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
-                                            <TextBlock Text="OUTLAW PRESETS:" FontSize="10" FontFamily="Chinese Rocks Rg, Georgia" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Text="OUTLAW PRESETS:" FontSize="10" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <Button Content="CAMPFIRE ACOUSTICS" Tag="Campfire" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
                                             <Button Content="GUNSLINGER ACTION" Tag="Gunslinger" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
                                             <Button Content="SALOON RAGTIME" Tag="Saloon" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
@@ -551,9 +558,9 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="MONITOR_LOG >" FontFamily="Chinese Rocks Rg, Georgia" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="MONITOR_LOG >" FontFamily="{StaticResource OutlawFont}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Text="Status: Disconnected" Grid.Column="1" Margin="10,0,0,0"
-                           FontFamily="Chinese Rocks Rg, Georgia" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
+                           FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
@@ -565,23 +572,23 @@
         </Button>
 
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-            <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
             <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3" Margin="0,0,12,0">
                 <StackPanel Orientation="Horizontal">
                     <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Toggle Connect" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="Toggle Connect" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
             <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Mute Channels" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Chinese Rocks Rg, Georgia" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="Mute Channels" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>
