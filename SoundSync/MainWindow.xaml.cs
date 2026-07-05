@@ -21,6 +21,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using SoundSync.Models;
 using SoundSync.Services;
+using SoundSync.Services.Providers;
 
 
 namespace SoundSync
@@ -30,11 +31,8 @@ namespace SoundSync
         private MMDeviceEnumerator? enumerator;
         private List<MMDevice>? allDevices;
 
-        // NAudio Audio Components
-        private WasapiLoopbackCapture? loopbackCapture;
-        private readonly List<WasapiOut> outputStreams = new List<WasapiOut>();
-        private readonly List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
-        private bool isConnected = false;
+        private readonly IAudioEngine audioEngine = new AudioEngine();
+        private bool isConnected => audioEngine.IsConnected;
         private bool isMuted = false;
 
         // SoundSync Link Wi-Fi Stream Server
@@ -263,8 +261,7 @@ namespace SoundSync
         {
             try
             {
-                enumerator = new MMDeviceEnumerator();
-                allDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
+                allDevices = audioEngine.GetActiveRenderDevices();
                 var items = allDevices.Select(d => {
                     float initialVol = 1.0f;
                     try
@@ -483,129 +480,17 @@ namespace SoundSync
 
             try
             {
-                if (enumerator == null) enumerator = new MMDeviceEnumerator();
-                var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-                loopbackCapture = new WasapiLoopbackCapture();
-                var captureFormat = loopbackCapture.WaveFormat;
-
-                foreach (var deviceItem in selectedDevices)
-                {
-                    var device = deviceItem.Device;
-
-                    if (device.ID == defaultDevice.ID)
-                    {
-                        continue;
-                    }
-
-                    var wasapiOut = new WasapiOut(device, AudioClientShareMode.Shared, useEventSync: true, latency: 50);
-
-                    var buffer = new BufferedWaveProvider(captureFormat)
-                    {
-                        BufferDuration = TimeSpan.FromMilliseconds(150),
-                        DiscardOnBufferOverflow = true
-                    };
-
-                    // 1. Convert raw bytes to float Samples
-                    var sampleProvider = buffer.ToSampleProvider();
-
-                    // 2. Attach volume control
-                    var volumeProvider = new VolumeSampleProvider(sampleProvider)
-                    {
-                        Volume = deviceItem.Volume
-                    };
-                    deviceItem.VolumeProvider = volumeProvider;
-
-                    // 3. Attach 3-band Equalizer control
-                    var equalizerProvider = new EqualizerSampleProvider(volumeProvider)
-                    {
-                        BassDb = deviceItem.Bass,
-                        MidDb = deviceItem.Mid,
-                        TrebleDb = deviceItem.Treble
-                    };
-                    deviceItem.EqualizerProvider = equalizerProvider;
-
-                    // 4. Attach custom dynamic audio delay
-                    var delayProvider = new DelaySampleProvider(equalizerProvider)
-                    {
-                        DelayMilliseconds = 0
-                    };
-                    deviceItem.DelayProvider = delayProvider;
-
-                    // 5. Attach custom peak level VU meter
-                    var meterProvider = new MeteringSampleProvider(delayProvider, (peak) =>
-                    {
-                        deviceItem.PeakLevel = peak;
-                    });
-
-                    // 6. Convert back to wave and initialize wasapiOut
-                    wasapiOut.Init(meterProvider.ToWaveProvider());
-
-                    wasapiOut.Play();
-                    outputStreams.Add(wasapiOut);
-                    buffers.Add(buffer);
-                }
-
-                if (outputStreams.Count == 0 && !selectedDevices.Any(d => d.Device.ID == defaultDevice.ID))
-                {
-                    System.Windows.MessageBox.Show("Please select at least one active device (either default or secondary).");
-                    Disconnect();
-                    return;
-                }
-
-                // Calculate and apply initial relative delays
-                UpdateRelativeDelays();
-
-                // START ZERO-CONFIGURATION WIRELESS TCP/WEBSOCKET STREAM SERVER
                 string ip = GetLocalIPAddress();
                 int port = 8090;
                 linkServer = new NetworkStreamer();
-                linkServer.Start(captureFormat.SampleRate, port);
 
-                loopbackCapture.DataAvailable += (s, args) =>
+                audioEngine.Connect(selectedDevices, linkServer, log => { }, () =>
                 {
-                    // Broadcast directly over local Wi-Fi link to connected browser clients
-                    linkServer?.BroadcastAudio(args.Buffer, args.BytesRecorded);
-
-                    const int TargetBufferDurationMs = 50;
-                    int targetBytes = (int)((TargetBufferDurationMs * captureFormat.AverageBytesPerSecond) / 1000.0);
-                    targetBytes -= targetBytes % captureFormat.BlockAlign;
-
-                    int toleranceBytes = (int)((20 * captureFormat.AverageBytesPerSecond) / 1000.0);
-                    toleranceBytes -= toleranceBytes % captureFormat.BlockAlign;
-
-                    foreach (var buffer in buffers)
-                    {
-                        int currentBytes = buffer.BufferedBytes;
-
-                        if (currentBytes > targetBytes + toleranceBytes)
-                        {
-                            int bytesToDiscard = currentBytes - targetBytes;
-                            bytesToDiscard -= bytesToDiscard % captureFormat.BlockAlign;
-                            if (bytesToDiscard > 0)
-                            {
-                                byte[] temp = new byte[bytesToDiscard];
-                                buffer.Read(temp, 0, bytesToDiscard);
-                            }
-                        }
-                        else if (currentBytes < targetBytes - toleranceBytes)
-                        {
-                            int bytesToPad = targetBytes - currentBytes;
-                            bytesToPad -= bytesToPad % captureFormat.BlockAlign;
-                            if (bytesToPad > 0)
-                            {
-                                byte[] silence = new byte[bytesToPad];
-                                buffer.AddSamples(silence, 0, bytesToPad);
-                            }
-                        }
-
-                        buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);
-                    }
-                };
-                loopbackCapture.StartRecording();
+                    Dispatcher.BeginInvoke(new Action(Disconnect));
+                });
 
                 StartDefaultDevicePeakTimer();
 
-                isConnected = true;
                 isMuted = false;
                 ConnectButton.Content = "DISCONNECT";
                 ConnectButton.Tag = "Connected";
@@ -625,22 +510,8 @@ namespace SoundSync
 
         private void Disconnect()
         {
-            if (loopbackCapture != null)
-            {
-                loopbackCapture.StopRecording();
-                loopbackCapture.Dispose();
-                loopbackCapture = null;
-            }
-
-            foreach (var stream in outputStreams)
-            {
-                try
-                {
-                    stream.Stop();
-                    stream.Dispose();
-                }
-                catch { }
-            }
+            var items = DeviceListBox.ItemsSource as List<DeviceItem> ?? new List<DeviceItem>();
+            audioEngine.Disconnect(items);
 
             if (linkServer != null)
             {
@@ -654,22 +525,6 @@ namespace SoundSync
 
             StopDefaultDevicePeakTimer();
 
-            var items = DeviceListBox.ItemsSource as List<DeviceItem>;
-            if (items != null)
-            {
-                foreach (var item in items)
-                {
-                    item.VolumeProvider = null;
-                    item.EqualizerProvider = null;
-                    item.DelayProvider = null;
-                    item.PeakLevel = 0f;
-                }
-            }
-
-            outputStreams.Clear();
-            buffers.Clear();
-
-            isConnected = false;
             isMuted = false;
             currentStreamUrl = string.Empty;
             ConnectButton.Content = "ACTIVATE SOUNDSYNC CONSOLE";
@@ -682,19 +537,7 @@ namespace SoundSync
         {
             var items = DeviceListBox.ItemsSource as List<DeviceItem>;
             if (items == null) return;
-
-            var activeItems = items.Where(i => i.IsSelected && i.DelayProvider != null).ToList();
-            if (activeItems.Count == 0) return;
-
-            int minDelaySetting = activeItems.Min(i => i.Delay);
-
-            foreach (var item in activeItems)
-            {
-                if (item.DelayProvider != null)
-                {
-                    item.DelayProvider.DelayMilliseconds = item.Delay - minDelaySetting;
-                }
-            }
+            audioEngine.UpdateRelativeDelays(items);
         }
 
         private void StartDefaultDevicePeakTimer()
@@ -823,197 +666,4 @@ namespace SoundSync
             base.OnClosed(e);
         }
     }
-
-
-
-    public class EqualizerSampleProvider : ISampleProvider
-    {
-        private readonly ISampleProvider source;
-        private readonly BiQuadFilter[] filters;
-        private float bassDb;
-        private float midDb;
-        private float trebleDb;
-        private readonly object lockObject = new object();
-        private bool filtersNeedUpdate = true;
-
-        public EqualizerSampleProvider(ISampleProvider source)
-        {
-            this.source = source;
-            filters = new BiQuadFilter[source.WaveFormat.Channels * 3];
-            CreateFilters();
-        }
-
-        public WaveFormat WaveFormat => source.WaveFormat;
-
-        public float BassDb
-        {
-            get => bassDb;
-            set { lock (lockObject) { bassDb = value; filtersNeedUpdate = true; } }
-        }
-
-        public float MidDb
-        {
-            get => midDb;
-            set { lock (lockObject) { midDb = value; filtersNeedUpdate = true; } }
-        }
-
-        public float TrebleDb
-        {
-            get => trebleDb;
-            set { lock (lockObject) { trebleDb = value; filtersNeedUpdate = true; } }
-        }
-
-        private void CreateFilters()
-        {
-            int channels = WaveFormat.Channels;
-            int sampleRate = WaveFormat.SampleRate;
-
-            for (int c = 0; c < channels; c++)
-            {
-                filters[c * 3] = BiQuadFilter.LowShelf(sampleRate, 200, 1.0f, bassDb);
-                filters[c * 3 + 1] = BiQuadFilter.PeakingEQ(sampleRate, 1000, 1.0f, midDb);
-                filters[c * 3 + 2] = BiQuadFilter.HighShelf(sampleRate, 5000, 1.0f, trebleDb);
-            }
-            filtersNeedUpdate = false;
-        }
-
-        public int Read(float[] buffer, int offset, int count)
-        {
-            int read = source.Read(buffer, offset, count);
-            lock (lockObject)
-            {
-                if (filtersNeedUpdate)
-                {
-                    CreateFilters();
-                }
-
-                int channels = WaveFormat.Channels;
-                for (int i = 0; i < read; i++)
-                {
-                    int channel = i % channels;
-                    float sample = buffer[offset + i];
-
-                    sample = filters[channel * 3].Transform(sample);
-                    sample = filters[channel * 3 + 1].Transform(sample);
-                    sample = filters[channel * 3 + 2].Transform(sample);
-
-                    buffer[offset + i] = sample;
-                }
-            }
-            return read;
-        }
-    }
-
-    public class DelaySampleProvider : ISampleProvider
-    {
-        private readonly ISampleProvider source;
-        private readonly Queue<float> delayQueue = new Queue<float>();
-        private readonly object lockObject = new object();
-        private int delaySamples;
-        private int currentDelayMs;
-
-        public DelaySampleProvider(ISampleProvider source)
-        {
-            this.source = source;
-        }
-
-        public WaveFormat WaveFormat => source.WaveFormat;
-
-        public int DelayMilliseconds
-        {
-            get => currentDelayMs;
-            set
-            {
-                lock (lockObject)
-                {
-                    currentDelayMs = value;
-                    delaySamples = (WaveFormat.SampleRate * WaveFormat.Channels * value) / 1000;
-
-                    // Trim down items if the delay size decreases
-                    while (delayQueue.Count > delaySamples)
-                    {
-                        delayQueue.Dequeue();
-                    }
-                }
-            }
-        }
-
-        public int Read(float[] buffer, int offset, int count)
-        {
-            // Read input samples from the preceding pipeline source first
-            int read = source.Read(buffer, offset, count);
-
-            lock (lockObject)
-            {
-                if (delaySamples <= 0)
-                {
-                    delayQueue.Clear();
-                    return read;
-                }
-
-                for (int i = 0; i < read; i++)
-                {
-                    float incomingSample = buffer[offset + i];
-
-                    // Populate queue with zero silence until the requested millisecond delay distance is filled
-                    if (delayQueue.Count < delaySamples)
-                    {
-                        delayQueue.Enqueue(incomingSample);
-                        buffer[offset + i] = 0f; // Return silence during initial delay loading phase
-                    }
-                    else
-                    {
-                        // Extract oldest sample and inject newest sample simultaneously
-                        buffer[offset + i] = delayQueue.Dequeue();
-                        delayQueue.Enqueue(incomingSample);
-                    }
-                }
-
-                return read;
-            }
-        }
-    }
-
-    public class MeteringSampleProvider : ISampleProvider
-    {
-        private readonly ISampleProvider source;
-        private readonly Action<float> peakCallback;
-        private float currentPeak = 0f;
-
-        public MeteringSampleProvider(ISampleProvider source, Action<float> peakCallback)
-        {
-            this.source = source;
-            this.peakCallback = peakCallback;
-        }
-
-        public WaveFormat WaveFormat => source.WaveFormat;
-
-        public int Read(float[] buffer, int offset, int count)
-        {
-            int samplesRead = source.Read(buffer, offset, count);
-            float maxVal = 0f;
-
-            for (int i = 0; i < samplesRead; i++)
-            {
-                float abs = Math.Abs(buffer[offset + i]);
-                if (maxVal > abs) { } // dummy instruction to silence warnings
-                if (abs > maxVal) maxVal = abs;
-            }
-
-            if (maxVal > currentPeak)
-            {
-                currentPeak = maxVal;
-            }
-            else
-            {
-                currentPeak = currentPeak * 0.95f + maxVal * 0.05f;
-            }
-
-            peakCallback(currentPeak);
-            return samplesRead;
-        }
-    }
-
-
-
-}
+}

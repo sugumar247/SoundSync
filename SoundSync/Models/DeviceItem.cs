@@ -4,6 +4,8 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using SoundSync;
+using SoundSync.Services.Providers;
+
 
 namespace SoundSync.Models
 {
