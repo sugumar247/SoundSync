@@ -13,6 +13,7 @@ namespace SoundSync.Models
     {
         public MMDevice Device { get; set; } = null!;
         public string Name => Device.FriendlyName;
+        public bool IsDefaultDevice { get; set; }
 
         private bool _isSelected;
         public bool IsSelected

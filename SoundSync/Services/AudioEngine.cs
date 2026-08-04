@@ -79,9 +79,9 @@ namespace SoundSync.Services
                     buffers.Add(buffer);
                 }
 
-                if (outputStreams.Count == 0 && !selectedDevices.Any(d => d.Device.ID == defaultDevice.ID))
+                if (outputStreams.Count == 0)
                 {
-                    throw new InvalidOperationException("Please select at least one active device (either default or secondary).");
+                    throw new InvalidOperationException("Please select at least one secondary device to mirror your audio to.");
                 }
 
                 UpdateRelativeDelays(selectedDevices);

@@ -261,6 +261,9 @@ namespace SoundSync
         {
             try
             {
+                var enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+                var defaultDevice = enumerator.GetDefaultAudioEndpoint(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.Role.Multimedia);
+
                 allDevices = audioEngine.GetActiveRenderDevices();
                 var items = allDevices.Select(d => {
                     float initialVol = 1.0f;
@@ -274,6 +277,7 @@ namespace SoundSync
                         Device = d,
                         IsSelected = false,
                         Volume = initialVol,
+                        IsDefaultDevice = (d.ID == defaultDevice.ID),
                         DelayChangedCallback = () => Dispatcher.BeginInvoke(new Action(UpdateRelativeDelays))
                     };
                 }).ToList();

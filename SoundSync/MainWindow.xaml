@@ -487,11 +487,23 @@
                                         <ColumnDefinition Width="75" MinWidth="55"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
-                                              Style="{StaticResource HardwareCheckBoxStyle}"
+                                    <CheckBox IsChecked="{Binding IsSelected}"
                                               Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
-                                              PreviewMouseDown="CheckBox_PreviewMouseDown"/>
-
+                                              PreviewMouseDown="CheckBox_PreviewMouseDown">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox" BasedOn="{StaticResource HardwareCheckBoxStyle}">
+                                                <Setter Property="Content" Value="{Binding Name}"/>
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
+                                                        <Setter Property="Content" Value="{Binding Name, StringFormat='{}{0} (SOURCE)'}"/>
+                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                        <Setter Property="Opacity" Value="0.5"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
                                     <ProgressBar Value="{Binding PeakLevel, Mode=OneWay}" 
                                                  Style="{StaticResource VuMeterStyle}" 
                                                  Height="8" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"/>

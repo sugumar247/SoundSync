@@ -12,7 +12,7 @@
 <p align="center">
  <img src="https://img.shields.io/github/v/release/sugumar247/SoundSync?style=for-the-badge&color=2EA44F" alt="Latest Release" />
   <img src="https://img.shields.io/badge/PLATFORM-WINDOWS-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform" />
-  <img src="https://img.shields.io/badge/LANGUAGE-C%23%20%7C%20.NET%208-239120?style=for-the-badge&logo=dotnet&logoColor=white" alt="Language" />
+  <img src="https://img.shields.io/badge/LANGUAGE-C%23%20%7C%20.NET%2010-239120?style=for-the-badge&logo=dotnet&logoColor=white" alt="Language" />
   <img src="https://img.shields.io/badge/UI-WPF-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Framework" />
   <img src="https://img.shields.io/badge/LICENSE-MIT-b31b1b?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/github/release-date/sugumar247/SoundSync?style=for-the-badge&color=007ACC" alt="Release Date" />
@@ -63,7 +63,16 @@ You do not need to install anything to use SoundSync!
 3. Double-click the file to run it. That's it!
 4. If you face any issue, open the application with  "Run as Administrator".
 
-*(Note: If you download the smaller `SoundSync-Light.exe` version, you must have the [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed on your PC).*
+*(Note: If you download the smaller `SoundSync-Light.exe` version, you must have the [.NET 10.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) installed on your PC).*
+
+### 🎛️ How to Use It (The Basics)
+
+SoundSync works by capturing audio from your **Default Windows Output** and mirroring it to other devices.
+
+1. **Do nothing with your main speakers** — whatever is set as your default Windows audio device is automatically your **Source**.
+2. Open SoundSync and **check the boxes** for the devices you want to mirror audio to (e.g., your secondary headphones or TV). 
+3. *Note: Do NOT check the box for your default device. It is already the source.*
+4. Click **Connect**. Audio will now play through your main speakers AND all selected devices!
 
 ### 💻 Building from Source (For Developers)
 
@@ -94,7 +103,7 @@ The app will now capture the silent audio stream, duplicate it, and push it to *
 
 ## 🛠️ Built With
 
-* **C# / .NET 8.0** - The core framework
+* **C# / .NET 10.0** - The core framework
 * **WPF** - UI Framework
 * **[NAudio](https://github.com/naudio/NAudio)** - Audio and WASAPI interaction
 
