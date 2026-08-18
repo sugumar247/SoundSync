@@ -21,6 +21,56 @@ namespace SoundSync.Services
         private string htmlPage = string.Empty;
         private CancellationTokenSource? cts;
 
+        /// <summary>Everyone currently listening, browsers and players alike.</summary>
+        private readonly List<Models.LinkClient> connectedClients = new List<Models.LinkClient>();
+
+        /// <summary>Raised when a listener joins or leaves, so the UI can refresh.</summary>
+        public event Action? ClientsChanged;
+
+        public List<Models.LinkClient> GetClients()
+        {
+            lock (clientLock) { return new List<Models.LinkClient>(connectedClients); }
+        }
+
+        private readonly Dictionary<Models.LinkClient, WebSocket> controlSockets = new();
+
+        /// <summary>Sends a control message to one listener's browser.</summary>
+        private void SendControl(Models.LinkClient entry)
+        {
+            WebSocket? socket;
+            lock (clientLock) { controlSockets.TryGetValue(entry, out socket); }
+            if (socket == null || socket.State != WebSocketState.Open) return;
+
+            string json = $"{{\"type\":\"volume\",\"value\":{entry.Volume.ToString(System.Globalization.CultureInfo.InvariantCulture)}}}";
+            var bytes = Encoding.UTF8.GetBytes(json);
+            _ = socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        private Models.LinkClient RegisterClient(TcpClient tcpClient, List<string> headers, string kind)
+        {
+            string ua = headers.FirstOrDefault(h => h.StartsWith("User-Agent:", StringComparison.OrdinalIgnoreCase))
+                               ?.Substring(11).Trim() ?? string.Empty;
+
+            var entry = new Models.LinkClient
+            {
+                Address = (tcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString() ?? "?",
+                DeviceName = Models.LinkClient.DescribeUserAgent(ua),
+                Kind = kind
+            };
+
+            entry.VolumeChanged = SendControl;
+            lock (clientLock) { connectedClients.Add(entry); }
+            ClientsChanged?.Invoke();
+            return entry;
+        }
+
+        private void UnregisterClient(Models.LinkClient? entry)
+        {
+            if (entry == null) return;
+            lock (clientLock) { connectedClients.Remove(entry); controlSockets.Remove(entry); }
+            ClientsChanged?.Invoke();
+        }
+
         /// <summary>Plain HTTP listeners - VLC and the like - receiving an endless WAV.</summary>
         private readonly List<NetworkStream> rawClients = new List<NetworkStream>();
         private int streamSampleRate = 48000;
@@ -144,7 +194,9 @@ namespace SoundSync.Services
                 // stream - the same trick internet radio uses.
                 if (requestPath.Equals("/stream.wav", StringComparison.OrdinalIgnoreCase))
                 {
-                    await ServeRawStreamAsync(stream, token);
+                    var playerEntry = RegisterClient(tcpClient, headers, "player");
+                    try { await ServeRawStreamAsync(stream, token); }
+                    finally { UnregisterClient(playerEntry); }
                     return;
                 }
 
@@ -195,6 +247,8 @@ namespace SoundSync.Services
                     {
                         clients.Add(webSocket);
                     }
+                    var browserEntry = RegisterClient(tcpClient, headers, "browser");
+                    lock (clientLock) { controlSockets[browserEntry] = webSocket; }
 
                     byte[] receiveBuffer = new byte[1024];
                     while (webSocket.State == WebSocketState.Open && !token.IsCancellationRequested)
@@ -210,6 +264,7 @@ namespace SoundSync.Services
                     {
                         clients.Remove(webSocket);
                     }
+                    UnregisterClient(browserEntry);
                     try { await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { }
                 }
                 else
@@ -348,7 +403,9 @@ namespace SoundSync.Services
                     try { raw.Dispose(); } catch { }
                 }
                 rawClients.Clear();
+                connectedClients.Clear();
             }
+            ClientsChanged?.Invoke();
 
             try
             {
@@ -486,6 +543,11 @@ namespace SoundSync.Services
             width: 100%; max-width: 520px; margin: 0 auto 18px auto;
             border: 1px solid var(--border); background: rgba(0,0,0,0.25); padding: 14px 16px;
         }
+        .ctl-check { display: flex; align-items: center; gap: 8px; cursor: pointer;
+                     font-family: 'JetBrains Mono', monospace; font-size: 12px;
+                     letter-spacing: 1px; color: var(--text-primary); flex: 1; }
+        .ctl-check input { width: 18px; height: 18px; accent-color: var(--accent); }
+        .ctl-row.disabled { opacity: 0.35; pointer-events: none; }
         .ctl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
         .ctl-label { font-family: 'JetBrains Mono', monospace; font-size: 12px;
                      letter-spacing: 1px; color: var(--text-secondary); width: 62px; }
@@ -629,6 +691,17 @@ namespace SoundSync.Services
         </div>
         <div class='controls' id='controls' style='display:none'>
             <div class='ctl-row'>
+                <label class='ctl-check'>
+                    <input type='checkbox' id='syncCtl'>
+                    <span>REAL-TIME SYNC</span>
+                </label>
+                <span class='ctl-value' id='syncVal'></span>
+            </div>
+            <p class='ctl-hint' id='syncHint'>Off: the buffer below is whatever you set, and if the
+               stream falls behind - locking the phone, a weak signal - it stays behind.
+               On: playback speeds up by up to 5% until it catches up with the PC, and the buffer
+               is chosen for you. A gap too large to stretch away is skipped instead.</p>
+            <div class='ctl-row'>
                 <label class='ctl-label' for='volCtl'>VOLUME</label>
                 <input type='range' id='volCtl' min='0' max='150' value='100'>
                 <span class='ctl-value' id='volVal'>100%</span>
@@ -665,6 +738,41 @@ namespace SoundSync.Services
         const volVal = document.getElementById('volVal');
         const bufCtl = document.getElementById('bufCtl');
         const bufVal = document.getElementById('bufVal');
+        const syncCtl = document.getElementById('syncCtl');
+        const syncVal = document.getElementById('syncVal');
+        const bufRow = bufCtl.parentElement;
+
+        // Target lead while real-time sync is driving, and the point past which a gap is
+        // skipped rather than stretched away - 5% of speed-up would take a minute to eat a
+        // ten second backlog, so a big one is jumped instead.
+        const AUTO_TARGET = 0.05;
+        const MAX_STRETCH = 1.05;
+        const SKIP_THRESHOLD = 1.0;
+        let autoSync = false;
+        let currentRate = 1.0;
+
+        // The choice survives a reload, and comes back on next time it was left on.
+        try { autoSync = localStorage.getItem('soundsync.realtime') === '1'; } catch (e) {}
+        syncCtl.checked = autoSync;
+
+        function applySyncMode() {
+            autoSync = syncCtl.checked;
+            try { localStorage.setItem('soundsync.realtime', autoSync ? '1' : '0'); } catch (e) {}
+            if (autoSync) {
+                bufRow.classList.add('disabled');
+                bufCtl.disabled = true;
+                bufVal.innerText = 'auto';
+            } else {
+                bufRow.classList.remove('disabled');
+                bufCtl.disabled = false;
+                bufVal.innerText = bufCtl.value + ' ms';
+                leadSeconds = bufCtl.value / 1000;
+                syncVal.innerText = '';
+                currentRate = 1.0;
+            }
+        }
+        syncCtl.addEventListener('change', applySyncMode);
+        applySyncMode();
 
         volCtl.addEventListener('input', () => {
             volVal.innerText = volCtl.value + '%';
@@ -840,6 +948,19 @@ namespace SoundSync.Services
                 drawVisualizer();
             };
             ws.onmessage = async (event) => {
+                // Text frames are control messages from the PC, not audio.
+                if (typeof event.data === 'string') {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'volume') {
+                            const pct = Math.round(msg.value * 100);
+                            volCtl.value = pct;
+                            volVal.innerText = pct + '%';
+                            if (gainNode) gainNode.gain.value = msg.value;
+                        }
+                    } catch (e) {}
+                    return;
+                }
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
@@ -857,11 +978,40 @@ namespace SoundSync.Services
                 const bufferSource = audioCtx.createBufferSource();
                 bufferSource.buffer = audioBuffer;
                 bufferSource.connect(analyser);
+
                 if (startTime < audioCtx.currentTime) {
-                    startTime = audioCtx.currentTime + leadSeconds; 
+                    // Ran dry: restart just ahead of now.
+                    startTime = audioCtx.currentTime + (autoSync ? AUTO_TARGET : leadSeconds);
                 }
+
+                if (autoSync) {
+                    // How far ahead of real time we are scheduled - that IS the delay the
+                    // listener hears. Left alone it only ever grows: every stall adds to it.
+                    const queued = startTime - audioCtx.currentTime;
+
+                    if (queued > SKIP_THRESHOLD) {
+                        // Too big to stretch away without a long, obvious pitch shift.
+                        startTime = audioCtx.currentTime + AUTO_TARGET;
+                        currentRate = 1.0;
+                        syncVal.innerText = 'resync';
+                    } else if (queued > AUTO_TARGET * 1.5) {
+                        // Play slightly fast until the backlog is eaten. Capped at 5%, which
+                        // is a small enough pitch change to pass unnoticed on speech or music.
+                        currentRate = Math.min(MAX_STRETCH, 1 + (queued - AUTO_TARGET));
+                        syncVal.innerText = Math.round(queued * 1000) + ' ms, catching up';
+                    } else {
+                        currentRate = 1.0;
+                        syncVal.innerText = Math.round(queued * 1000) + ' ms';
+                    }
+                    bufferSource.playbackRate.value = currentRate;
+                    bufVal.innerText = Math.round(queued * 1000) + ' ms';
+                    bufCtl.value = Math.max(bufCtl.min, Math.min(bufCtl.max, Math.round(queued * 1000)));
+                } else {
+                    currentRate = 1.0;
+                }
+
                 bufferSource.start(startTime);
-                startTime += audioBuffer.duration;
+                startTime += audioBuffer.duration / currentRate;
             };
             ws.onclose = () => {
                 btnText.innerText = 'DISCONNECTED';

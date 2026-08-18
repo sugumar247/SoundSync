@@ -779,6 +779,60 @@
             </Grid>
         </Border>
 
+        <!-- Everyone listening over the network, shown like extra outputs -->
+        <Border x:Name="RemotePanel" Grid.Row="4" Margin="0,6,0,0" Visibility="Collapsed"
+                Background="{DynamicResource StatusPanelBgBrush}"
+                BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" Padding="12,8">
+            <StackPanel>
+                <TextBlock x:Name="RemoteHeader" Text="REMOTE LISTENERS" Margin="0,0,0,6"
+                           FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           ToolTip="Every phone, browser or media player listening over the network right now. They behave like extra outputs, except the audio reaches them over Wi-Fi instead of a cable."/>
+
+                <ItemsControl x:Name="RemoteList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="165"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{Binding Summary}" VerticalAlignment="Center"
+                                           FontFamily="{StaticResource OutlawFont}" FontSize="13"
+                                           Foreground="{DynamicResource TextForegroundBrush}"
+                                           ToolTip="Device type worked out from the browser it reported, its address on the network, and when it started listening."/>
+
+                                <Grid Grid.Column="1" Margin="10,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="42"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0" Minimum="0" Maximum="1.5"
+                                            Value="{Binding Volume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            IsEnabled="{Binding IsControllable}"
+                                            Style="{StaticResource ConsoleSliderStyle}" VerticalAlignment="Center"
+                                            ToolTip="Volume for this listener alone, applied in its own browser. It changes nothing on the PC and nothing for the other listeners. Media players such as VLC cannot be controlled from here."/>
+                                    <TextBlock Grid.Column="1" Text="{Binding VolumePercent}"
+                                               FontFamily="{StaticResource OutlawFont}" FontSize="13"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <CheckBox Grid.Column="2" Content="SYNC" VerticalAlignment="Center"
+                                          IsChecked="{Binding SyncVolumeWithDefault}"
+                                          IsEnabled="{Binding IsControllable}"
+                                          Checked="RemoteSync_Changed" Unchecked="RemoteSync_Changed"
+                                          Style="{StaticResource HardwareCheckBoxStyle}"
+                                          ToolTip="Tie this listener to the volume of the default device on this PC, keeping the balance it has now. Moving the PC volume carries it along."/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <!-- Phone stream address: selectable, clickable, copyable -->
         <Border x:Name="LinkPanel" Grid.Row="5" Margin="0,6,0,0"
                 Background="{DynamicResource StatusPanelBgBrush}"

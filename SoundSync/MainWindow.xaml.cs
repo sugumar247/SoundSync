@@ -346,6 +346,7 @@ namespace SoundSync
                 audioEngine.SetDefaultDeviceVolume(defaultVolume);
                 audioEngine.ApplyMakeUpGain(allItems, defaultVolume, appSettings.IndependentVolumes);
             }
+            ApplyRemoteVolumeSync();
 
             foreach (var item in allItems.Where(i => i.SyncVolumeWithDefault && !i.IsDefaultDevice))
             {
@@ -427,6 +428,54 @@ namespace SoundSync
                 ? "Mirrors now get the full-strength signal - their own Windows volume sets the level."
                 : "Mirrors now inherit the default device's volume as well as their own.";
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
+        }
+
+        // ---- listeners on the network ------------------------------------------------
+
+        /// <summary>Redraws the remote listener list. Called whenever someone joins or leaves.</summary>
+        private void RefreshRemoteListeners()
+        {
+            var listeners = linkServer?.GetClients() ?? new List<LinkClient>();
+            RemoteList.ItemsSource = null;
+            RemoteList.ItemsSource = listeners;
+
+            RemotePanel.Visibility = listeners.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            RemoteHeader.Text = listeners.Count == 1
+                ? "REMOTE LISTENERS  -  1 connected"
+                : $"REMOTE LISTENERS  -  {listeners.Count} connected";
+
+            ApplyRemoteVolumeSync();
+        }
+
+        private void RemoteSync_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.CheckBox box) return;
+            if (box.DataContext is not LinkClient client) return;
+
+            if (client.SyncVolumeWithDefault)
+            {
+                // Capture the balance it already has, so ticking the box does not jump it.
+                var defaultItem = allItems.FirstOrDefault(i => i.IsDefaultDevice);
+                float reference = defaultItem?.SystemVolume ?? 0f;
+                client.VolumeRatioToDefault = reference > 0.001f
+                    ? Math.Clamp(client.Volume / reference, 0f, 4f)
+                    : 1.0f;
+            }
+            ApplyRemoteVolumeSync();
+        }
+
+        /// <summary>Moves every synced listener to match the default device's volume.</summary>
+        private void ApplyRemoteVolumeSync()
+        {
+            var defaultItem = allItems.FirstOrDefault(i => i.IsDefaultDevice);
+            if (defaultItem == null) return;
+            float reference = defaultItem.SystemVolume;
+
+            foreach (var client in linkServer?.GetClients() ?? new List<LinkClient>())
+            {
+                if (!client.SyncVolumeWithDefault || !client.IsControllable) continue;
+                client.Volume = Math.Clamp(reference * client.VolumeRatioToDefault, 0f, 1.5f);
+            }
         }
 
         // ---- phone link address -----------------------------------------------------
@@ -1088,6 +1137,7 @@ namespace SoundSync
                 string ip = GetLocalIPAddress();
                 int port = 8090;
                 linkServer = new NetworkStreamer();
+                linkServer.ClientsChanged += () => Dispatcher.BeginInvoke(new Action(RefreshRemoteListeners));
 
                 audioEngine.Connect(selectedDevices, linkServer, log => { }, () =>
                 {
@@ -1137,6 +1187,7 @@ namespace SoundSync
             StopLatencyTimer();
             StopAutoAlignTimer();
             HideLinkPanel();
+            RemotePanel.Visibility = Visibility.Collapsed;
             currentStreamUrl = string.Empty;
             ConnectButton.Content = "ACTIVATE SOUNDSYNC CONSOLE";
             ConnectButton.Tag = "Disconnected";
