@@ -191,6 +191,19 @@ namespace SoundSync.Services
                         buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);
                     }
                 };
+                // Windows kills the capture when the source endpoint is reconfigured or
+                // unplugged. Without this the app sits there believing it is still mirroring
+                // while every output has gone quiet.
+                loopbackCapture.RecordingStopped += (s, e) =>
+                {
+                    if (!isConnected) return;
+                    string why = e.Exception != null
+                        ? AudioErrors.Describe(e.Exception, "capture device")
+                        : "The source device stopped providing audio.";
+                    logCallback("Mirroring stopped: " + why);
+                    onDisconnectedCallback();
+                };
+
                 loopbackCapture.StartRecording();
                 isConnected = true;
             }

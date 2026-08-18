@@ -40,6 +40,7 @@ namespace SoundSync.Models
                         _sampleRate = value;
                         SampleRateStatus = string.Empty;
                         SampleRateTooltip = RateTooltipBase;
+                        FormatChangedCallback?.Invoke(this);
                     }
                     else
                     {
@@ -477,6 +478,13 @@ namespace SoundSync.Models
 
         // Action callback to trigger delay updates without direct MainWindow coupling
         public Action? DelayChangedCallback { get; set; }
+
+        /// <summary>
+        /// Raised after this endpoint's sample rate changed. Windows tears the audio engine
+        /// down for a device whose format changes, which kills a loopback capture reading
+        /// from it, so whoever is mirroring needs to restart.
+        /// </summary>
+        public Action<DeviceItem>? FormatChangedCallback { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -430,6 +430,55 @@ namespace SoundSync
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
         }
 
+        // ---- recovering from a device format change ----------------------------------
+
+        private bool restartingAfterFormatChange;
+
+        /// <summary>
+        /// Restarts mirroring after an endpoint's sample rate changed.
+        ///
+        /// Windows tears down and rebuilds the audio engine for a device whose format
+        /// changes. Any stream open on it dies with it - and if it was the default device,
+        /// the loopback capture everything is fed from dies too, so every output goes quiet
+        /// while the app still believes it is connected. Rebuilding the session is the only
+        /// way back, so do it here rather than leaving the user to press CONNECT twice.
+        /// </summary>
+        private void HandleFormatChanged(DeviceItem changed)
+        {
+            if (!isConnected || restartingAfterFormatChange) return;
+            restartingAfterFormatChange = true;
+
+            StatusText.Text = $"{changed.Name} changed to {changed.SampleRate} Hz - restarting mirroring...";
+            StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusMutedBrush");
+
+            // Give Windows a moment to finish rebuilding the endpoint before reopening it.
+            var settle = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(900)
+            };
+            settle.Tick += (s, e) =>
+            {
+                settle.Stop();
+                try
+                {
+                    Disconnect();
+                    ConnectButton_Click(this, new RoutedEventArgs());
+                    if (isConnected)
+                    {
+                        StatusText.Text = $"Mirroring restarted at {changed.SampleRate} Hz.";
+                        StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusText.Text = "Could not restart after the format change: " + ex.Message;
+                    StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusErrorBrush");
+                }
+                finally { restartingAfterFormatChange = false; }
+            };
+            settle.Start();
+        }
+
         // ---- listeners on the network ------------------------------------------------
 
         /// <summary>Redraws the remote listener list. Called whenever someone joins or leaves.</summary>
@@ -894,7 +943,8 @@ namespace SoundSync
                         // gain here is what let an output sit silently at zero.
                         Volume = 1.0f,
                         IsDefaultDevice = (d.ID == defaultDevice.ID),
-                        DelayChangedCallback = () => Dispatcher.BeginInvoke(new Action(UpdateRelativeDelays))
+                        DelayChangedCallback = () => Dispatcher.BeginInvoke(new Action(UpdateRelativeDelays)),
+                        FormatChangedCallback = changed => Dispatcher.BeginInvoke(new Action(() => HandleFormatChanged(changed)))
                     };
                     item.AttachSystemVolume(action => Dispatcher.BeginInvoke(action));
                     item.LoadSystemFormat();
