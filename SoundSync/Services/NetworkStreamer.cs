@@ -34,6 +34,28 @@ namespace SoundSync.Services
 
         private readonly Dictionary<Models.LinkClient, WebSocket> controlSockets = new();
 
+        /// <summary>Raised for every command a listener's page sends back.</summary>
+        public event Action<string>? CommandReceived;
+
+        /// <summary>Pushes a text message to every connected browser.</summary>
+        public void SendToAll(string json)
+        {
+            WebSocket[] targets;
+            lock (clientLock) { targets = clients.ToArray(); }
+
+            var bytes = Encoding.UTF8.GetBytes(json);
+            foreach (var socket in targets)
+            {
+                if (socket.State != WebSocketState.Open) continue;
+                try
+                {
+                    _ = socket.SendAsync(new ArraySegment<byte>(bytes),
+                                         WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                catch { }
+            }
+        }
+
         /// <summary>Sends a control message to one listener's browser.</summary>
         private void SendControl(Models.LinkClient entry)
         {
@@ -250,13 +272,20 @@ namespace SoundSync.Services
                     var browserEntry = RegisterClient(tcpClient, headers, "browser");
                     lock (clientLock) { controlSockets[browserEntry] = webSocket; }
 
-                    byte[] receiveBuffer = new byte[1024];
+                    byte[] receiveBuffer = new byte[8192];
                     while (webSocket.State == WebSocketState.Open && !token.IsCancellationRequested)
                     {
                         var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), token);
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             break;
+                        }
+
+                        // Text frames coming the other way are commands from the page.
+                        if (result.MessageType == WebSocketMessageType.Text && result.Count > 0)
+                        {
+                            string command = Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
+                            CommandReceived?.Invoke(command);
                         }
                     }
 
@@ -715,6 +744,12 @@ namespace SoundSync.Services
                Buffer trades delay against dropouts: lower is tighter, higher survives a weak signal.</p>
         </div>
 
+        <div class='controls' id='pcPanel' style='display:none'>
+            <div class='ctl-row'><span class='ctl-label' style='width:auto'>PC OUTPUTS</span>
+                <span class='ctl-value' id='pcMode' style='width:auto'></span></div>
+            <div id='pcList'></div>
+        </div>
+
         <button class='btn-connect' id='playBtn'>
             <span id='btnText'>CONNECT RECEIVER</span>
         </button>
@@ -844,6 +879,70 @@ namespace SoundSync.Services
             ripple.style.top = `${y}px`;
             setTimeout(() => ripple.remove(), 600);
         });
+        const pcPanel = document.getElementById('pcPanel');
+        const pcList = document.getElementById('pcList');
+        const pcMode = document.getElementById('pcMode');
+        let pcControllable = false;
+
+        function sendCommand(obj) {
+            if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+        }
+
+        // Draws the PC's outputs. Read-only unless the PC has remote control switched on.
+        function renderDevices(msg) {
+            pcControllable = !!msg.controllable;
+            pcMode.innerText = pcControllable ? 'control enabled' : 'view only';
+            pcPanel.style.display = 'block';
+            pcList.innerHTML = '';
+
+            msg.devices.forEach(d => {
+                const row = document.createElement('div');
+                row.className = 'ctl-row';
+
+                const tick = document.createElement('input');
+                tick.type = 'checkbox';
+                tick.checked = !!d.selected;
+                tick.disabled = !pcControllable || d.isDefault;
+                tick.onchange = () => sendCommand({ type: 'select', id: d.id, value: tick.checked });
+
+                const label = document.createElement('span');
+                label.className = 'ctl-label';
+                label.style.width = 'auto';
+                label.style.flex = '1';
+                label.innerText = d.name + (d.isDefault ? '  [SOURCE]' : '') + (d.badge ? '  ' + d.badge : '');
+
+                const vol = document.createElement('input');
+                vol.type = 'range'; vol.min = 0; vol.max = 100;
+                vol.value = Math.round(d.volume * 100);
+                vol.disabled = !pcControllable;
+                vol.oninput = () => { pct.innerText = vol.value + '%'; };
+                vol.onchange = () => sendCommand({ type: 'volume', id: d.id, value: vol.value / 100 });
+
+                const pct = document.createElement('span');
+                pct.className = 'ctl-value';
+                pct.innerText = Math.round(d.volume * 100) + '%';
+
+                row.appendChild(tick); row.appendChild(label); row.appendChild(vol); row.appendChild(pct);
+                pcList.appendChild(row);
+
+                if (d.editable) {
+                    const dRow = document.createElement('div');
+                    dRow.className = 'ctl-row';
+                    const dLab = document.createElement('span');
+                    dLab.className = 'ctl-label'; dLab.innerText = 'DELAY';
+                    const dSlide = document.createElement('input');
+                    dSlide.type = 'range'; dSlide.min = 0; dSlide.max = 500; dSlide.value = d.delay;
+                    dSlide.disabled = !pcControllable;
+                    dSlide.oninput = () => { dVal.innerText = dSlide.value + ' ms'; };
+                    dSlide.onchange = () => sendCommand({ type: 'delay', id: d.id, value: parseInt(dSlide.value) });
+                    const dVal = document.createElement('span');
+                    dVal.className = 'ctl-value'; dVal.innerText = d.delay + ' ms';
+                    dRow.appendChild(dLab); dRow.appendChild(dSlide); dRow.appendChild(dVal);
+                    pcList.appendChild(dRow);
+                }
+            });
+        }
+
         // Any later tap gets one more chance to unlock a context the browser left suspended.
         document.addEventListener('click', () => {
             if (audioCtx && audioCtx.state === 'suspended') {
@@ -860,6 +959,7 @@ namespace SoundSync.Services
             try { if (audioCtx) audioCtx.close(); } catch (e) {}
             audioCtx = null;
             controls.style.display = 'none';
+            pcPanel.style.display = 'none';
             btnText.innerText = 'CONNECT RECEIVER';
             playBtn.classList.remove('active');
             playBtn.style.background = '';
@@ -946,12 +1046,14 @@ namespace SoundSync.Services
                 bgGlow.classList.add('active');
                 setTimeout(() => visPlaceholder.style.display = 'none', 300);
                 drawVisualizer();
+                sendCommand({ type: 'refresh' });
             };
             ws.onmessage = async (event) => {
                 // Text frames are control messages from the PC, not audio.
                 if (typeof event.data === 'string') {
                     try {
                         const msg = JSON.parse(event.data);
+                        if (msg.type === 'devices') { renderDevices(msg); return; }
                         if (msg.type === 'volume') {
                             const pct = Math.round(msg.value * 100);
                             volCtl.value = pct;

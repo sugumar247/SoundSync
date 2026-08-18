@@ -430,6 +430,95 @@ namespace SoundSync
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
         }
 
+        // ---- remote control from the web page ----------------------------------------
+
+        /// <summary>
+        /// Sends the page a snapshot of the outputs, so it can show the same list the PC
+        /// shows. Only what the page needs to draw and drive a row goes over the wire.
+        /// </summary>
+        private void PushDeviceSnapshot()
+        {
+            if (linkServer == null || !isConnected) return;
+
+            var rows = allItems
+                .Where(i => !i.IsHidden)
+                .Select(i => new
+                {
+                    id = i.Device.ID,
+                    name = i.Name,
+                    isDefault = i.IsDefaultDevice,
+                    selected = i.IsSelected,
+                    volume = Math.Round(i.SystemVolume, 3),
+                    delay = i.Delay,
+                    badge = i.ConnectionBadge,
+                    editable = i.CanProcessAudio
+                })
+                .ToList();
+
+            var payload = new
+            {
+                type = "devices",
+                controllable = appSettings.AllowRemoteControl,
+                devices = rows
+            };
+
+            try { linkServer.SendToAll(JsonSerializer.Serialize(payload)); } catch { }
+        }
+
+        /// <summary>Applies a command the page sent back. Ignored unless remote control is on.</summary>
+        private void HandleRemoteCommand(string json)
+        {
+            if (!appSettings.AllowRemoteControl) return;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("type", out var typeProp)) return;
+                string type = typeProp.GetString() ?? string.Empty;
+
+                if (type == "refresh") { PushDeviceSnapshot(); return; }
+                if (!root.TryGetProperty("id", out var idProp)) return;
+
+                string id = idProp.GetString() ?? string.Empty;
+                var item = allItems.FirstOrDefault(i => i.Device.ID == id);
+                if (item == null) return;
+
+                switch (type)
+                {
+                    case "volume" when root.TryGetProperty("value", out var v):
+                        item.SystemVolume = (float)Math.Clamp(v.GetDouble(), 0, 1);
+                        break;
+
+                    case "delay" when root.TryGetProperty("value", out var d) && item.CanEditDelay:
+                        item.Delay = (int)Math.Clamp(d.GetDouble(), 0, 500);
+                        UpdateRelativeDelays();
+                        break;
+
+                    case "select" when root.TryGetProperty("value", out var sel) && !item.IsDefaultDevice:
+                        item.IsSelected = sel.GetBoolean();
+                        SaveCurrentProfile();
+                        break;
+                }
+
+                PushDeviceSnapshot();
+            }
+            catch { }
+        }
+
+        private void RemoteControlButton_Click(object sender, RoutedEventArgs e)
+        {
+            appSettings.AllowRemoteControl = !appSettings.AllowRemoteControl;
+            SaveAppSettings();
+            RefreshHeaderToggles();
+            PushDeviceSnapshot();
+
+            StatusText.Text = appSettings.AllowRemoteControl
+                ? "Listeners can now change this PC's outputs. Anyone holding the link can do it."
+                : "Listeners can see the outputs but not change them.";
+            StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
+        }
+
         // ---- recovering from a device format change ----------------------------------
 
         private bool restartingAfterFormatChange;
@@ -494,6 +583,7 @@ namespace SoundSync
                 : $"REMOTE LISTENERS  -  {listeners.Count} connected";
 
             ApplyRemoteVolumeSync();
+            PushDeviceSnapshot();
         }
 
         private void RemoteSync_Changed(object sender, RoutedEventArgs e)
@@ -707,6 +797,8 @@ namespace SoundSync
             StartupButton.Content = onStartup ? "AUTOSTART: ON" : "AUTOSTART: OFF";
             IndependentVolumesButton.Content = appSettings.IndependentVolumes
                 ? "INDEPENDENT VOLUMES: ON" : "INDEPENDENT VOLUMES: OFF";
+            RemoteControlButton.Content = appSettings.AllowRemoteControl
+                ? "REMOTE CONTROL: ON" : "REMOTE CONTROL: OFF";
             StartupButton.ToolTip = onStartup
                 ? "SoundSync starts when you sign in to Windows and reconnects using these same settings. Click to turn off."
                 : "Click to have Windows start SoundSync when you sign in and reconnect automatically with the devices ticked here.";
@@ -1187,7 +1279,12 @@ namespace SoundSync
                 string ip = GetLocalIPAddress();
                 int port = 8090;
                 linkServer = new NetworkStreamer();
-                linkServer.ClientsChanged += () => Dispatcher.BeginInvoke(new Action(RefreshRemoteListeners));
+                linkServer.ClientsChanged += () => Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    RefreshRemoteListeners();
+                    PushDeviceSnapshot();
+                }));
+                linkServer.CommandReceived += json => Dispatcher.BeginInvoke(new Action(() => HandleRemoteCommand(json)));
 
                 audioEngine.Connect(selectedDevices, linkServer, log => { }, () =>
                 {

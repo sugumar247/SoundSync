@@ -21,6 +21,13 @@ namespace SoundSync.Models
         /// </summary>
         public bool IndependentVolumes { get; set; } = true;
 
+        /// <summary>
+        /// Let listeners change this PC's outputs, not just hear them. Off by default: the
+        /// link is handed out so people can listen, and being able to listen should not
+        /// silently carry the power to reconfigure the machine's audio.
+        /// </summary>
+        public bool AllowRemoteControl { get; set; }
+
         // ---- window geometry --------------------------------------------------------
         // Zero width means "never saved", so the app sizes itself against the monitor the
         // first time and remembers whatever the user settles on after that.
