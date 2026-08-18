@@ -21,11 +21,57 @@ namespace SoundSync.Services
         private string htmlPage = string.Empty;
         private CancellationTokenSource? cts;
 
+        /// <summary>Plain HTTP listeners - VLC and the like - receiving an endless WAV.</summary>
+        private readonly List<NetworkStream> rawClients = new List<NetworkStream>();
+        private int streamSampleRate = 48000;
+        private int streamChannels = 2;
+
+        /// <summary>Converts the captured float samples to 16-bit PCM and pushes them out.</summary>
+        private void BroadcastToRawClients(byte[] buffer, int count)
+        {
+            NetworkStream[] targets;
+            lock (clientLock)
+            {
+                if (rawClients.Count == 0) return;
+                targets = rawClients.ToArray();
+            }
+
+            int samples = count / 4;
+            var pcm = new byte[samples * 2];
+            for (int i = 0; i < samples; i++)
+            {
+                float v = BitConverter.ToSingle(buffer, i * 4);
+                short s = (short)(Math.Clamp(v, -1f, 1f) * short.MaxValue);
+                pcm[i * 2] = (byte)(s & 0xFF);
+                pcm[i * 2 + 1] = (byte)((s >> 8) & 0xFF);
+            }
+
+            foreach (var target in targets)
+            {
+                try
+                {
+                    target.Write(pcm, 0, pcm.Length);
+                }
+                catch
+                {
+                    // Listener hung up or stopped reading: drop it and carry on.
+                    lock (clientLock) { rawClients.Remove(target); }
+                    try { target.Dispose(); } catch { }
+                }
+            }
+        }
+
         public bool IsRunning => isRunning;
 
-        public void Start(int sampleRate, int port)
+        public void Start(int sampleRate, int channels, int port)
         {
-            htmlPage = GetHtmlTemplate().Replace("{{SAMPLE_RATE}}", sampleRate.ToString());
+            streamSampleRate = sampleRate;
+            streamChannels = Math.Max(1, channels);
+
+            htmlPage = GetHtmlTemplate()
+                .Replace("{{SAMPLE_RATE}}", sampleRate.ToString())
+                .Replace("{{CHANNELS}}", Math.Max(1, channels).ToString())
+                .Replace("{{TOKEN}}", LinkAuth.Token);
             tcpListener = new TcpListener(IPAddress.Any, port);
 
             try
@@ -73,6 +119,59 @@ namespace SoundSync.Services
                 }
 
                 if (headers.Count == 0) return;
+
+                // Every request - page load and WebSocket upgrade alike - must carry the
+                // access token derived from the operator's SSH key. See LinkAuth.
+                if (!LinkAuth.IsRequestAuthorized(headers[0]))
+                {
+                    byte[] deniedBody = Encoding.UTF8.GetBytes("401 Unauthorized");
+                    string deniedHeader = "HTTP/1.1 401 Unauthorized\r\n" +
+                                          "Content-Type: text/plain; charset=utf-8\r\n" +
+                                          $"Content-Length: {deniedBody.Length}\r\n" +
+                                          "Connection: close\r\n\r\n";
+
+                    byte[] deniedHeaderBytes = Encoding.UTF8.GetBytes(deniedHeader);
+                    await stream.WriteAsync(deniedHeaderBytes, 0, deniedHeaderBytes.Length, token);
+                    await stream.WriteAsync(deniedBody, 0, deniedBody.Length, token);
+                    return;
+                }
+
+                string requestTarget = headers[0].Split(' ').Length > 1 ? headers[0].Split(' ')[1] : "/";
+                string requestPath = requestTarget.Split('?')[0];
+
+                // Endless WAV for ordinary media players. VLC, foobar2000 and friends cannot
+                // speak WebSocket, but they will happily play a never-ending HTTP audio
+                // stream - the same trick internet radio uses.
+                if (requestPath.Equals("/stream.wav", StringComparison.OrdinalIgnoreCase))
+                {
+                    await ServeRawStreamAsync(stream, token);
+                    return;
+                }
+
+                // A one-line playlist, for players that want a file to open rather than a URL.
+                if (requestPath.Equals("/stream.m3u", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Build the URL from the socket's own local address, never from the
+                    // client-supplied Host header. Reflecting that header would let a
+                    // poisoned request produce a playlist pointing somewhere else - with
+                    // the access token inside it.
+                    string host = tcpClient.Client.LocalEndPoint is IPEndPoint local
+                        ? $"{local.Address}:{local.Port}"
+                        : "localhost";
+                    byte[] playlist = Encoding.UTF8.GetBytes(
+                        "#EXTM3U\n#EXTINF:-1,SoundSync Live\n" +
+                        $"http://{host}/stream.wav?t={LinkAuth.Token}\n");
+
+                    string playlistHeader = "HTTP/1.1 200 OK\r\n" +
+                                            "Content-Type: audio/x-mpegurl\r\n" +
+                                            "Content-Disposition: attachment; filename=\"soundsync.m3u\"\r\n" +
+                                            $"Content-Length: {playlist.Length}\r\n" +
+                                            "Connection: close\r\n\r\n";
+                    byte[] playlistHeaderBytes = Encoding.UTF8.GetBytes(playlistHeader);
+                    await stream.WriteAsync(playlistHeaderBytes, 0, playlistHeaderBytes.Length, token);
+                    await stream.WriteAsync(playlist, 0, playlist.Length, token);
+                    return;
+                }
 
                 bool isWebSocket = headers.Any(h => h.Contains("Upgrade: websocket", StringComparison.OrdinalIgnoreCase));
 
@@ -136,8 +235,62 @@ namespace SoundSync.Services
             }
         }
 
+        /// <summary>
+        /// Holds an ordinary media player on the line, feeding it an endless WAV.
+        ///
+        /// The header claims a near-infinite length because the real one is unknowable - the
+        /// stream ends when the listener leaves. Samples are converted to 16-bit PCM, which
+        /// every player understands and which halves the bandwidth compared with the float
+        /// data the browser page receives.
+        /// </summary>
+        private async Task ServeRawStreamAsync(NetworkStream stream, CancellationToken token)
+        {
+            int rate = streamSampleRate;
+            int ch = streamChannels;
+            int byteRate = rate * ch * 2;
+
+            var header = new List<byte>();
+            void Ascii(string s) => header.AddRange(Encoding.ASCII.GetBytes(s));
+            void U32(uint v) => header.AddRange(BitConverter.GetBytes(v));
+            void U16(ushort v) => header.AddRange(BitConverter.GetBytes(v));
+
+            Ascii("RIFF"); U32(0xFFFFFFFF); Ascii("WAVE");
+            Ascii("fmt "); U32(16); U16(1); U16((ushort)ch);
+            U32((uint)rate); U32((uint)byteRate); U16((ushort)(ch * 2)); U16(16);
+            Ascii("data"); U32(0xFFFFFFFF);
+
+            string httpHeader = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: audio/wav\r\n" +
+                                "Cache-Control: no-cache, no-store\r\n" +
+                                "Connection: close\r\n\r\n";
+            byte[] httpHeaderBytes = Encoding.UTF8.GetBytes(httpHeader);
+
+            await stream.WriteAsync(httpHeaderBytes, 0, httpHeaderBytes.Length, token);
+            await stream.WriteAsync(header.ToArray(), 0, header.Count, token);
+            await stream.FlushAsync(token);
+
+            lock (clientLock) { rawClients.Add(stream); }
+            try
+            {
+                // Nothing more to send from here: BroadcastAudio writes into this stream.
+                // Park until the listener goes away or the server stops.
+                while (isRunning && !token.IsCancellationRequested)
+                {
+                    await Task.Delay(250, token);
+                    lock (clientLock) { if (!rawClients.Contains(stream)) break; }
+                }
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                lock (clientLock) { rawClients.Remove(stream); }
+            }
+        }
+
         public void BroadcastAudio(byte[] buffer, int count)
         {
+            BroadcastToRawClients(buffer, count);
+
             if (clients.Count == 0 || !isRunning) return;
 
             lock (clientLock)
@@ -189,6 +342,12 @@ namespace SoundSync.Services
                     try { client.Dispose(); } catch { }
                 }
                 clients.Clear();
+
+                foreach (var raw in rawClients)
+                {
+                    try { raw.Dispose(); } catch { }
+                }
+                rawClients.Clear();
             }
 
             try
@@ -323,6 +482,18 @@ namespace SoundSync.Services
             color: var(--text-secondary);
             margin-bottom: 4px;
         }
+        .controls {
+            width: 100%; max-width: 520px; margin: 0 auto 18px auto;
+            border: 1px solid var(--border); background: rgba(0,0,0,0.25); padding: 14px 16px;
+        }
+        .ctl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .ctl-label { font-family: 'JetBrains Mono', monospace; font-size: 12px;
+                     letter-spacing: 1px; color: var(--text-secondary); width: 62px; }
+        .ctl-row input[type=range] { flex: 1; accent-color: var(--accent); height: 26px; }
+        .ctl-value { font-family: 'JetBrains Mono', monospace; font-size: 12px;
+                     color: var(--text-primary); width: 58px; text-align: right; }
+        .ctl-hint { font-size: 11px; line-height: 1.5; color: var(--text-secondary);
+                    margin: 6px 0 0 0; }
         .hud-value {
             font-family: 'JetBrains Mono', monospace;
             font-size: 16px;
@@ -456,6 +627,21 @@ namespace SoundSync.Services
                 <span>Tap Connect to play stream</span>
             </div>
         </div>
+        <div class='controls' id='controls' style='display:none'>
+            <div class='ctl-row'>
+                <label class='ctl-label' for='volCtl'>VOLUME</label>
+                <input type='range' id='volCtl' min='0' max='150' value='100'>
+                <span class='ctl-value' id='volVal'>100%</span>
+            </div>
+            <div class='ctl-row'>
+                <label class='ctl-label' for='bufCtl'>BUFFER</label>
+                <input type='range' id='bufCtl' min='20' max='500' step='10' value='50'>
+                <span class='ctl-value' id='bufVal'>50 ms</span>
+            </div>
+            <p class='ctl-hint'>Volume is local to this device and changes nothing on the PC.
+               Buffer trades delay against dropouts: lower is tighter, higher survives a weak signal.</p>
+        </div>
+
         <button class='btn-connect' id='playBtn'>
             <span id='btnText'>CONNECT RECEIVER</span>
         </button>
@@ -470,6 +656,24 @@ namespace SoundSync.Services
         const canvas = document.getElementById('visualizerCanvas');
         const ctx = canvas.getContext('2d');
         let audioCtx = null;
+        let gainNode = null;
+        let mediaDest = null;
+        let silentBypass = null;
+        let leadSeconds = 0.05;
+        const controls = document.getElementById('controls');
+        const volCtl = document.getElementById('volCtl');
+        const volVal = document.getElementById('volVal');
+        const bufCtl = document.getElementById('bufCtl');
+        const bufVal = document.getElementById('bufVal');
+
+        volCtl.addEventListener('input', () => {
+            volVal.innerText = volCtl.value + '%';
+            if (gainNode) gainNode.gain.value = volCtl.value / 100;
+        });
+        bufCtl.addEventListener('input', () => {
+            bufVal.innerText = bufCtl.value + ' ms';
+            leadSeconds = bufCtl.value / 1000;
+        });
         let ws = null;
         let startTime = 0;
         let analyser = null;
@@ -532,25 +736,103 @@ namespace SoundSync.Services
             ripple.style.top = `${y}px`;
             setTimeout(() => ripple.remove(), 600);
         });
+        // Any later tap gets one more chance to unlock a context the browser left suspended.
+        document.addEventListener('click', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                const again = audioCtx.resume();
+                if (again && again.catch) again.catch(() => {});
+            }
+        });
+
+        function teardown() {
+            try { if (ws) { ws.onclose = null; ws.close(); } } catch (e) {}
+            ws = null;
+            try { if (silentBypass) { silentBypass.pause(); silentBypass.srcObject = null; } } catch (e) {}
+            silentBypass = null; mediaDest = null; gainNode = null;
+            try { if (audioCtx) audioCtx.close(); } catch (e) {}
+            audioCtx = null;
+            controls.style.display = 'none';
+            btnText.innerText = 'CONNECT RECEIVER';
+            playBtn.classList.remove('active');
+            playBtn.style.background = '';
+            statusVal.innerText = 'IDLE';
+            statusVal.style.color = '';
+            visualizerBox.classList.remove('active');
+            bgGlow.classList.remove('active');
+            visPlaceholder.style.display = '';
+            visPlaceholder.style.opacity = '1';
+        }
+
         playBtn.onclick = () => {
-            if (audioCtx) return;
+            // Second press disconnects, so one button covers both directions.
+            if (audioCtx) { teardown(); return; }
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Phones start an AudioContext suspended and only honour resume() from inside a
+            // real user gesture. Resuming here - in the click handler - is what unlocks it;
+            // doing it later, when audio arrives, is silently ignored and the page then shows
+            // a healthy connection while playing nothing at all.
+            const unlock = audioCtx.resume();
+            if (unlock && unlock.catch) unlock.catch(() => {});
+
+            // iOS additionally wants a buffer to have been played from within the gesture.
+            try {
+                const primer = audioCtx.createBufferSource();
+                primer.buffer = audioCtx.createBuffer(1, 1, 22050);
+                primer.connect(audioCtx.destination);
+                primer.start(0);
+            } catch (e) {}
+
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 256;
             dataArray = new Uint8Array(analyser.frequencyBinCount);
-            analyser.connect(audioCtx.destination);
+
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = volCtl.value / 100;
+            analyser.connect(gainNode);
+
+            // iOS mutes the Web Audio API when the ringer switch is off, but it does NOT
+            // mute a media element. Routing the graph into a <video> and playing that gets
+            // sound out with the phone on silent - the trick every web player uses.
+            // If the browser will not co-operate we fall back to the normal destination.
+            let routed = false;
+            try {
+                if (audioCtx.createMediaStreamDestination) {
+                    mediaDest = audioCtx.createMediaStreamDestination();
+                    gainNode.connect(mediaDest);
+                    silentBypass = document.createElement('video');
+                    silentBypass.setAttribute('playsinline', '');
+                    silentBypass.setAttribute('webkit-playsinline', '');
+                    silentBypass.muted = false;
+                    silentBypass.volume = 1.0;
+                    silentBypass.srcObject = mediaDest.stream;
+                    const played = silentBypass.play();
+                    if (played && played.catch) played.catch(() => {
+                        gainNode.connect(audioCtx.destination);
+                    });
+                    routed = true;
+                }
+            } catch (e) { routed = false; }
+            if (!routed) gainNode.connect(audioCtx.destination);
+
+            controls.style.display = 'block';
             btnText.innerText = 'ESTABLISHING...';
             playBtn.style.background = '';
             statusVal.innerText = 'NEGOTIATING';
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}`);
+            ws = new WebSocket(`${protocol}//${window.location.host}/?t={{TOKEN}}`);
             ws.binaryType = 'arraybuffer';
             ws.onopen = () => {
                 btnText.innerText = 'STREAM ACTIVE';
                 playBtn.classList.add('active');
                 playBtn.style.background = '';
-                statusVal.innerText = 'CONNECTED';
-                statusVal.style.color = 'var(--success)';
+                if (audioCtx.state === 'suspended') {
+                    statusVal.innerText = 'TAP AGAIN TO ALLOW AUDIO';
+                    statusVal.style.color = 'var(--error)';
+                } else {
+                    statusVal.innerText = 'CONNECTED';
+                    statusVal.style.color = 'var(--success)';
+                }
                 visualizerBox.classList.add('active');
                 visPlaceholder.style.opacity = '0';
                 bgGlow.classList.add('active');
@@ -563,7 +845,7 @@ namespace SoundSync.Services
                 }
                 const arrayBuffer = event.data;
                 const floatData = new Float32Array(arrayBuffer);
-                const channels = 2; 
+                const channels = {{CHANNELS}}; 
                 const sampleCount = floatData.length / channels;
                 const audioBuffer = audioCtx.createBuffer(channels, sampleCount, {{SAMPLE_RATE}});
                 for (let channel = 0; channel < channels; channel++) {
@@ -576,7 +858,7 @@ namespace SoundSync.Services
                 bufferSource.buffer = audioBuffer;
                 bufferSource.connect(analyser);
                 if (startTime < audioCtx.currentTime) {
-                    startTime = audioCtx.currentTime + 0.05; 
+                    startTime = audioCtx.currentTime + leadSeconds; 
                 }
                 bufferSource.start(startTime);
                 startTime += audioBuffer.duration;

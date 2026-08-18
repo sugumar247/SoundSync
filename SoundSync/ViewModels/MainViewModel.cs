@@ -187,7 +187,7 @@ namespace SoundSync.ViewModels
                 IsConnected = true;
                 ConnectButtonText = "DISCONNECT";
                 ConnectButtonTag = "Connected";
-                StatusText = $"Streaming: http://{GetLocalIPAddress()}:8090 | Routing Audio!";
+                StatusText = $"Streaming: http://{GetLocalIPAddress()}:8090/?t={Services.LinkAuth.Token} | Routing Audio!";
                 StatusBrushKey = "StatusSuccessBrush";
                 SaveProfile();
             }

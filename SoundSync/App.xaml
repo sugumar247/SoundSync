@@ -4,7 +4,12 @@
              xmlns:local="clr-namespace:SoundSync"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Embedded font: ships with the app, works on every machine -->
-        <FontFamily x:Key="OutlawFont">pack://application:,,,/Fonts/#Chinese Rocks Rg</FontFamily>
+        <!-- Embedded font: ships with the app, works on every machine.
+             Kept for the large display headings only - it is a condensed grunge face
+             and is unreadable at UI sizes. -->
+        <FontFamily x:Key="DisplayFont">pack://application:,,,/Fonts/#Chinese Rocks Rg</FontFamily>
+
+        <!-- Everything else uses the system UI face so small text stays legible. -->
+        <FontFamily x:Key="OutlawFont">Segoe UI</FontFamily>
     </Application.Resources>
 </Application>

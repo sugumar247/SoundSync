@@ -1,8 +1,9 @@
 <Window x:Class="SoundSync.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SoundSync" Height="580" Width="680"
-        MinHeight="500" MinWidth="640"
+        xmlns:services="clr-namespace:SoundSync.Services"
+        Title="SoundSync" Height="1040" Width="1440"
+        MinHeight="700" MinWidth="1000"
         Background="{DynamicResource WindowBgBrush}" WindowStartupLocation="CenterScreen"
         Icon="logo.png" ResizeMode="CanResizeWithGrip"
         KeyDown="Window_KeyDown">
@@ -53,9 +54,9 @@
         <Style x:Key="HeaderButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="9,5"/>
             <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
-            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -92,7 +93,7 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -117,6 +118,73 @@
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sample rate picker: the stock ComboBox chrome is light and clashes here -->
+        <Style x:Key="ConsoleComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ConsoleBorderBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="Toggle" Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Bd" Background="{DynamicResource ControlBgBrush}"
+                                                BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1">
+                                            <Path x:Name="Arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Margin="0,0,7,0" Data="M 0 0 L 4 4 L 8 0 Z"
+                                                  Fill="{DynamicResource TextMutedBrush}"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBlueBrush}"/>
+                                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource TextForegroundBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                              Margin="8,0,22,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                            <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="{DynamicResource PanelBackgroundBrush}"
+                                        BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1"
+                                        MinWidth="{TemplateBinding ActualWidth}">
+                                    <ItemsPresenter/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
+                        <Setter Property="Padding" Value="8,4"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBlueBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -220,7 +288,7 @@
         <!-- Gritty Western Checkbox -->
         <Style x:Key="HardwareCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -299,7 +367,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ConnectButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1.5"/>
             <Setter Property="Foreground" Value="{DynamicResource TextForegroundBrush}"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontFamily" Value="{StaticResource OutlawFont}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Height" Value="50"/>
@@ -361,8 +429,9 @@
             <RowDefinition Height="Auto"/> <!-- Row 2: Labels -->
             <RowDefinition Height="*"/>    <!-- Row 3: ListBox -->
             <RowDefinition Height="Auto"/> <!-- Row 4: Status Panel -->
-            <RowDefinition Height="Auto"/> <!-- Row 5: Connect Button -->
-            <RowDefinition Height="Auto"/> <!-- Row 6: Shortcuts -->
+            <RowDefinition Height="Auto"/> <!-- Row 5: Phone link -->
+            <RowDefinition Height="Auto"/> <!-- Row 6: Connect Button -->
+            <RowDefinition Height="Auto"/> <!-- Row 7: Shortcuts -->
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,15">
@@ -375,14 +444,24 @@
 
                     <Viewbox Grid.Column="0" HorizontalAlignment="Left" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal" Background="Transparent">
-                            <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" Foreground="{DynamicResource TextForegroundBrush}"/>
+                            <TextBlock Text="SOUNDSYNC" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource DisplayFont}" Foreground="{DynamicResource TextForegroundBrush}"/>
                             <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="0" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="11" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold"/>
+                                <TextBlock Text="RED DEAD EDITION" Foreground="{DynamicResource BadgeFgBrush}" FontSize="13" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
                     </Viewbox>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button x:Name="StartupButton" Content="AUTOSTART: OFF" Style="{StaticResource HeaderButtonStyle}"
+                                    Click="StartupButton_Click" Margin="0,0,8,0"
+                                    ToolTip="Have Windows start SoundSync when you sign in and reconnect automatically with the devices ticked here."/>
+                            <Button x:Name="IndependentVolumesButton" Content="INDEPENDENT VOLUMES: ON" Style="{StaticResource HeaderButtonStyle}"
+                                    Click="IndependentVolumesButton_Click" Margin="0,0,8,0"
+                                    ToolTip="Windows hands SoundSync the audio AFTER applying the default device's volume. With the master at 20%, a mirror would only ever receive a fifth of the signal and then attenuate it again with its own volume - so it could never play at full strength.&#10;&#10;ON: that attenuation is divided back out, so every mirror gets the full-strength signal and its own Windows volume is the only thing setting how loud it plays. Make-up gain is capped at 8x (18 dB); below roughly 12% on the master there is not enough signal left to fully recover.&#10;&#10;OFF: the original behaviour - turning the master down turns the mirrors down too."/>
+                            <Button x:Name="ShowHiddenButton" Content="SHOW HIDDEN" Style="{StaticResource HeaderButtonStyle}"
+                                    Click="ShowHiddenButton_Click" Margin="0,0,8,0"
+                                    ToolTip="Show the outputs you have hidden, so you can bring them back. Click again to hide them."/>
+
                         <Button x:Name="ThemeButton" Style="{StaticResource HeaderButtonStyle}" Click="ThemeButton_Click" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
                                 <Path x:Name="ThemeIconPath" 
@@ -420,7 +499,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Path Data="M11,15H13V17H11V15M11,7H13V13H11V7M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20Z"
                           Fill="{DynamicResource BadgeFgBrush}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="UpdateText" Text="A NEW UPDATE IS AVAILABLE FOR SOUNDSYNC!" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="UpdateText" ToolTip="A newer SoundSync was published on GitHub." Text="A NEW UPDATE IS AVAILABLE FOR SOUNDSYNC!" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
                 <Button Grid.Column="1" x:Name="UpdateDownloadButton" Content="DOWNLOAD UPDATE" Click="UpdateDownloadButton_Click" Style="{StaticResource PresetButtonStyle}" Background="{DynamicResource ConnectButtonBgBrush}" Foreground="{DynamicResource TextForegroundBrush}" BorderBrush="{DynamicResource ConnectButtonBorderBrush}" Padding="15,4"/>
             </Grid>
@@ -430,16 +509,16 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" MinWidth="80"/>
                 <ColumnDefinition Width="80" MinWidth="60"/>
-                <ColumnDefinition Width="120" MinWidth="80"/>
-                <ColumnDefinition Width="110" MinWidth="70"/>
-                <ColumnDefinition Width="75" MinWidth="55"/>
+                <ColumnDefinition Width="165" MinWidth="125"/>
+                <ColumnDefinition Width="150" MinWidth="110"/>
+                <ColumnDefinition Width="95" MinWidth="75"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="AUDIO OUT CHANNEL" Grid.Column="0" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
-            <TextBlock Text="SIGNAL" Grid.Column="1" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="VOLUME" Grid.Column="2" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="DELAY" Grid.Column="3" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
-            <TextBlock Text="LATENCY" Grid.Column="4" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
+            <TextBlock Text="AUDIO OUT CHANNEL" ToolTip="Every sound output Windows currently has enabled. Tick the ones that should play the same audio as the default device." Grid.Column="0" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}"/>
+            <TextBlock Text="SIGNAL" ToolTip="Live audio level reaching each output." Grid.Column="1" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="VOLUME" ToolTip="The Windows volume of each output, shown as a percentage." Grid.Column="2" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="DELAY" ToolTip="Per-output delay, for lining up speakers that are out of step with each other." Grid.Column="3" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="LATENCY" ToolTip="The delay currently applied to this output, in milliseconds." Grid.Column="4" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"/>
         </Grid>
 
         <Border Grid.Row="3" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1.5" CornerRadius="0" Padding="8">
@@ -456,7 +535,7 @@
                        IsHitTestVisible="False" 
                        Panel.ZIndex="0"/>
 
-                <TextBlock Text="NO OUTLAWS IN RANGE" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="26" FontWeight="Bold" FontFamily="{StaticResource OutlawFont}" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.4">
+                <TextBlock Text="NO OUTLAWS IN RANGE" Foreground="{DynamicResource NoDevicesTextBrush}" FontSize="26" FontWeight="Bold" FontFamily="{StaticResource DisplayFont}" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1" Opacity="0.4">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -482,13 +561,14 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="3*" MinWidth="80"/>
                                         <ColumnDefinition Width="80" MinWidth="60"/>
-                                        <ColumnDefinition Width="120" MinWidth="80"/>
-                                        <ColumnDefinition Width="110" MinWidth="70"/>
-                                        <ColumnDefinition Width="75" MinWidth="55"/>
+                                        <ColumnDefinition Width="165" MinWidth="125"/>
+                                        <ColumnDefinition Width="150" MinWidth="110"/>
+                                        <ColumnDefinition Width="95" MinWidth="75"/>
                                     </Grid.ColumnDefinitions>
 
+                                    <DockPanel Grid.Column="0" LastChildFill="False" Margin="0,0,10,0">
                                     <CheckBox IsChecked="{Binding IsSelected}"
-                                              Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
+                                              DockPanel.Dock="Left" VerticalAlignment="Center"
                                               PreviewMouseDown="CheckBox_PreviewMouseDown">
                                         <CheckBox.Style>
                                             <Style TargetType="CheckBox" BasedOn="{StaticResource HardwareCheckBoxStyle}">
@@ -496,7 +576,7 @@
                                                 <Setter Property="IsEnabled" Value="True"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
-                                                        <Setter Property="Content" Value="{Binding Name, StringFormat='{}{0} (SOURCE)'}"/>
+                                                        <Setter Property="Content" Value="{Binding Name}"/>
                                                         <Setter Property="IsEnabled" Value="False"/>
                                                         <Setter Property="Opacity" Value="0.5"/>
                                                     </DataTrigger>
@@ -504,21 +584,87 @@
                                             </Style>
                                         </CheckBox.Style>
                                     </CheckBox>
+                                    <Border DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                            Background="{DynamicResource BadgeBgBrush}"
+                                            BorderBrush="{DynamicResource BadgeFgBrush}" BorderThickness="1"
+                                            Padding="6,1" Margin="0,0,12,0"
+                                            ToolTip="{Binding DefaultBadgeTooltip}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDefaultDevice}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="SYSTEM DEFAULT" FontSize="11" FontWeight="Bold"
+                                                   FontFamily="{StaticResource OutlawFont}"
+                                                   Foreground="{DynamicResource BadgeFgBrush}"/>
+                                    </Border>
+
+                                    <Border DockPanel.Dock="Right" VerticalAlignment="Center"
+                                            BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1"
+                                            Padding="6,1" Margin="0,0,8,0"
+                                            ToolTip="{Binding ConnectionTooltip}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasConnectionBadge}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding ConnectionBadge}" FontSize="11" FontWeight="Bold"
+                                                   FontFamily="{StaticResource OutlawFont}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                    </Border>
+                                    </DockPanel>
+
                                     <ProgressBar Value="{Binding PeakLevel, Mode=OneWay}" 
                                                  Style="{StaticResource VuMeterStyle}" 
-                                                 Height="8" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"/>
+                                                 Height="8" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"
+                                                 ToolTip="Live level of the audio being sent to this output. Flat means no sound is reaching it."/>
 
-                                    <Slider Grid.Column="2" Minimum="0" Maximum="1" Value="{Binding Volume}" 
-                                            Style="{StaticResource ConsoleSliderStyle}"
-                                            VerticalAlignment="Center" Margin="12,0"/>
+                                    <Grid Grid.Column="2" Margin="12,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="42"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0" Minimum="0" Maximum="1"
+                                                Value="{Binding SystemVolume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Style="{StaticResource ConsoleSliderStyle}"
+                                                ToolTip="Windows volume for this output - the very same slider as the system mixer. Moving it here moves it in Windows, and vice versa."
+                                                VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SystemVolumePercent}"
+                                                   FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
 
-                                    <Slider Grid.Column="3" Minimum="-3000" Maximum="3000" Value="{Binding Delay}" 
+                                    <Slider Grid.Column="3" Minimum="0" Maximum="500" Value="{Binding Delay}"
+                                            SmallChange="1" LargeChange="10"
+                                            TickFrequency="1" IsSnapToTickEnabled="True"
+                                            IsEnabled="{Binding CanEditDelay}"
+                                            Opacity="{Binding ProcessingOpacity}"
                                             Style="{StaticResource DelaySliderStyle}"
-                                            VerticalAlignment="Center" Margin="12,0"/>
+                                            VerticalAlignment="Center" Margin="12,0"
+                                            ToolTip="{Binding DelayTooltip}"/>
 
-                                    <TextBlock Grid.Column="4" Text="{Binding Delay, StringFormat={}{0}ms}" 
-                                               FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource DelayTextBrush}" 
-                                               VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    <StackPanel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                ToolTip="Top line: the delay you dialled in.&#10;Bottom line: the delay actually measured on this output right now - audio waiting in its buffer, plus the endpoint latency, plus your setting.">
+                                        <TextBlock Text="{Binding Delay, StringFormat={}{0} ms}"
+                                                   FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold"
+                                                   Foreground="{DynamicResource DelayTextBrush}"
+                                                   HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding MeasuredLatencyText}"
+                                                   FontFamily="{StaticResource OutlawFont}" FontSize="12"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   HorizontalAlignment="Right"/>
+                                    </StackPanel>
                                 </Grid>
 
                                 <Border Margin="0,12,0,4" 
@@ -531,7 +677,36 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ShowSyncOptions}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+
+                                            <CheckBox IsChecked="{Binding AutoAlignDelay}"
+                                                      Checked="AutoAlignCheck_Changed" Unchecked="AutoAlignCheck_Changed"
+                                                      Content="AUTO-ALIGN DELAY"
+                                                      Style="{StaticResource HardwareCheckBoxStyle}"
+                                                      VerticalAlignment="Center" Margin="0,0,24,0"
+                                                      ToolTip="Every 2 seconds, SoundSync measures how much audio is waiting in each mirrored output's buffer and adds just enough delay to this one to bring it level with the slowest of them. It corrects drift on its own, so speakers that slowly wander apart stay together, and the slider locks while it is on.&#10;&#10;It aligns the mirrored outputs WITH EACH OTHER, not with the default device. The default device plays straight from Windows before SoundSync ever sees the audio, so there is nothing there to measure and nothing to delay.&#10;&#10;Changes under 3 ms are ignored, because buffers breathe and correcting every tick would be audible."/>
+
+                                            <CheckBox IsChecked="{Binding SyncVolumeWithDefault}"
+                                                      Checked="SyncVolumeCheck_Changed" Unchecked="SyncVolumeCheck_Changed"
+                                                      Content="SYNC VOLUME WITH DEFAULT OUTPUT"
+                                                      Style="{StaticResource HardwareCheckBoxStyle}"
+                                                      VerticalAlignment="Center"
+                                                      ToolTip="Ties this output's Windows volume to the default device's. Turn the volume up or down anywhere - the volume keys, the tray mixer, this app - and this speaker follows immediately.&#10;&#10;It keeps the BALANCE you already set rather than copying the number. If the default sits at 40% and this one at 20% when you tick the box, this one stays at half: the default moving to 60% puts this at 30%.&#10;&#10;Ticking it again re-reads the current balance. Only shown for ticked outputs that are not the default one."/>
+                                        </StackPanel>
 
                                         <Grid Grid.Row="0" Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
@@ -543,25 +718,44 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <TextBlock Text="BASS" Grid.Column="0" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="BASS" ToolTip="Low frequencies for this output, from -12 to +12 dB." Grid.Column="0" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="1" Minimum="-12" Maximum="12" Value="{Binding Bass}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                            <TextBlock Text="MID" Grid.Column="2" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="MID" ToolTip="Middle frequencies, where voices sit, from -12 to +12 dB." Grid.Column="2" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="3" Minimum="-12" Maximum="12" Value="{Binding Mid}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,25,0"/>
 
-                                            <TextBlock Text="TREBLE" Grid.Column="4" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
+                                            <TextBlock Text="TREBLE" ToolTip="High frequencies for this output, from -12 to +12 dB." Grid.Column="4" FontSize="14" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="10,0,8,0"/>
                                             <Slider Grid.Column="5" Minimum="-12" Maximum="12" Value="{Binding Treble}" 
                                                     Style="{StaticResource EqSliderStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                         </Grid>
 
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                            <TextBlock Text="SYSTEM CONFIG:" ToolTip="These two controls change Windows itself, not just SoundSync." FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <ComboBox ItemsSource="{Binding SupportedRates}"
+                                                      SelectedItem="{Binding SampleRate, Mode=TwoWay}"
+                                                      Style="{StaticResource ConsoleComboBoxStyle}" MinWidth="88" Height="24" VerticalAlignment="Center" Margin="0,0,5,0"
+                                                      FontFamily="{StaticResource OutlawFont}" FontSize="12"
+                                                      ToolTip="{Binding SampleRateTooltip}"/>
+                                            <TextBlock Text="Hz" FontSize="12" FontFamily="{StaticResource OutlawFont}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                            <TextBlock Text="{Binding SampleRateStatus}" FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <Button Content="SET AS DEFAULT" Style="{StaticResource PresetButtonStyle}"
+                                                    Click="SetDefaultDevice_Click" Tag="{Binding}"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip="{Binding SetAsDefaultTooltip}"/>
+                                            <Button Content="HIDE" Style="{StaticResource PresetButtonStyle}"
+                                                    Click="HideDevice_Click" Tag="{Binding}"
+                                                    VerticalAlignment="Center" Margin="6,0,0,0"
+                                                    ToolTip="Take this output out of the list to keep things tidy. Its settings are kept, and SHOW HIDDEN at the top brings it back."/>
+                                        </StackPanel>
+
                                         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
-                                            <TextBlock Text="OUTLAW PRESETS:" FontSize="10" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <Button Content="CAMPFIRE ACOUSTICS" Tag="Campfire" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
-                                            <Button Content="GUNSLINGER ACTION" Tag="Gunslinger" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
-                                            <Button Content="SALOON RAGTIME" Tag="Saloon" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
-                                            <Button Content="RESET FLAT" Tag="Reset" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}"/>
+                                            <TextBlock Text="OUTLAW PRESETS:" ToolTip="Ready-made equaliser curves for this output." FontSize="12" FontFamily="{StaticResource OutlawFont}" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Button Content="CAMPFIRE ACOUSTICS" ToolTip="Warm preset: lifts the bass and softens the treble." Tag="Campfire" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="GUNSLINGER ACTION" ToolTip="Punchy preset: boosts bass and treble, scoops the mids." Tag="Gunslinger" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="SALOON RAGTIME" ToolTip="Bright preset: forward mids and treble, light on bass." Tag="Saloon" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}" Margin="0,0,8,0"/>
+                                            <Button Content="RESET FLAT" ToolTip="Return bass, mid and treble to neutral for this output." Tag="Reset" Click="PresetButton_Click" Style="{StaticResource PresetButtonStyle}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -578,37 +772,119 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="MONITOR_LOG >" FontFamily="{StaticResource OutlawFont}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="MONITOR_LOG >" ToolTip="What SoundSync is doing right now, and why anything failed." FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Text="Status: Disconnected" Grid.Column="1" Margin="10,0,0,0"
-                           FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
+                           TextWrapping="Wrap"
+                           FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
-        <Button x:Name="ConnectButton" Content="ACTIVATE SOUNDSYNC CONSOLE" Grid.Row="5" Height="48"
+        <!-- Phone stream address: selectable, clickable, copyable -->
+        <Border x:Name="LinkPanel" Grid.Row="5" Margin="0,6,0,0"
+                Background="{DynamicResource StatusPanelBgBrush}"
+                BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" Padding="12,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="WEB STREAM LINK >" VerticalAlignment="Center"
+                           FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           ToolTip="Open this address in a browser on any device on the same network to hear what this PC is playing. The token in the address is what keeps strangers out."/>
+
+                <TextBox x:Name="LinkUrlBox" Grid.Column="1" Margin="10,0,10,0"
+                         IsReadOnly="True" IsReadOnlyCaretVisible="True"
+                         Background="Transparent" BorderThickness="0"
+                         Foreground="{DynamicResource StatusSuccessBrush}"
+                         FontFamily="{StaticResource OutlawFont}" FontSize="14" FontWeight="Bold"
+                         VerticalAlignment="Center" VerticalContentAlignment="Center"
+                         ToolTip="Select any part of it and copy, or use the buttons on the right."/>
+
+                <Button Grid.Column="2" Content="COPY" Style="{StaticResource PresetButtonStyle}"
+                        Click="CopyLink_Click" Margin="0,0,6,0"
+                        ToolTip="Put this address on the clipboard, ready to paste into a message or a browser."/>
+
+                <Button Grid.Column="3" Content="OPEN" Style="{StaticResource PresetButtonStyle}"
+                        Click="OpenLink_Click"
+                        ToolTip="Open the player in your default browser on this PC, to check it works before using a phone."/>
+
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="TOKEN FROM" VerticalAlignment="Center"
+                               FontFamily="{StaticResource OutlawFont}" FontSize="12" FontWeight="Bold"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+
+                    <TextBlock IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0" Panel.ZIndex="1"
+                               FontFamily="{StaticResource OutlawFont}" FontSize="12"
+                               Foreground="{DynamicResource NoDevicesTextBrush}"
+                               Text="{Binding Source={x:Static services:LinkAuth.SuggestedKeyFileHint}, StringFormat='(empty = random token, e.g. {0})'}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=LinkKeyFileBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBox x:Name="LinkKeyFileBox" Width="360" Margin="10,0,6,0" Height="24"
+                             VerticalContentAlignment="Center"
+                             Background="{DynamicResource ControlBgBrush}"
+                             BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1"
+                             Foreground="{DynamicResource TextForegroundBrush}"
+                             FontFamily="{StaticResource OutlawFont}" FontSize="12"
+                             ToolTip="Leave this empty and SoundSync uses a random token, generated once and kept in its own folder. Nothing to set up, and the address stays the same between sessions.&#10;&#10;Point it at a key file you already have - an SSH private key, for instance - and the token becomes HMAC-SHA256 of that file instead. Every machine holding the same key then produces the same token, so one address works on all of them.&#10;&#10;The file is only read, hashed, and wiped from memory. It is never sent over the network and never copied anywhere."/>
+
+                    <Button Content="BROWSE" Style="{StaticResource PresetButtonStyle}"
+                            Click="BrowseKeyFile_Click" Margin="0,0,6,0"
+                            ToolTip="Pick the key file to derive the token from."/>
+
+                    <Button Content="USE RANDOM" Style="{StaticResource PresetButtonStyle}"
+                            Click="UseRandomToken_Click" Margin="0,0,12,0"
+                            ToolTip="Go back to the random token kept in the app's own folder."/>
+
+                    <TextBlock x:Name="LinkTokenSourceText" VerticalAlignment="Center"
+                               FontFamily="{StaticResource OutlawFont}" FontSize="12"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               ToolTip="Where the token in the address above actually came from."/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Button x:Name="ConnectButton" ToolTip="Start mirroring the default device's audio to every ticked output. Press again to stop." Content="ACTIVATE SOUNDSYNC CONSOLE" Grid.Row="6" Height="48"
                 Style="{StaticResource ConnectButtonStyle}" Click="ConnectButton_Click" BorderBrush="{x:Null}">
             <Button.Effect>
                 <DropShadowEffect BlurRadius="0" ShadowDepth="3" Direction="270" Opacity="0.5" Color="Black"/>
             </Button.Effect>
         </Button>
 
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-            <TextBlock Text="CONSOLE SHORTCUTS:" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+            <TextBlock Text="CONSOLE SHORTCUTS:" ToolTip="Keyboard shortcuts that work while this window has focus." FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
             <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3" Margin="0,0,12,0">
                 <StackPanel Orientation="Horizontal">
                     <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock Text="C" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Toggle Connect" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="Toggle Connect" ToolTip="Press C to start or stop mirroring." Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="13" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
             <Border Background="{DynamicResource ShortcutBgBrush}" BorderBrush="{DynamicResource ConsoleBorderBrush}" BorderThickness="1" CornerRadius="0" Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <Border Background="{DynamicResource ShortcutKeyBgBrush}" BorderBrush="{DynamicResource ShortcutKeyShadowBrush}" BorderThickness="1,1,1,2.5" CornerRadius="0" Padding="5,1,5,3" Margin="0,0,6,0" VerticalAlignment="Center">
-                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock Text="M" Foreground="{DynamicResource TextForegroundBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="13" FontWeight="Bold"/>
                     </Border>
-                    <TextBlock Text="Mute Channels" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="Mute Channels" ToolTip="Press M to silence every mirrored output without disconnecting." Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource OutlawFont}" FontSize="13" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>
