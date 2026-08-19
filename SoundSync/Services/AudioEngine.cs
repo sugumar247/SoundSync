@@ -159,6 +159,8 @@ namespace SoundSync.Services
                     //
                     // Per-consumer volume, equaliser and delay come after this, in layer 3,
                     // so no consumer's settings can leak into another's.
+                    RefreshDistributionGain();
+
                     byte[] source = args.Buffer;
                     int sourceBytes = args.BytesRecorded;
 
@@ -309,6 +311,31 @@ namespace SoundSync.Services
         /// <summary>The device being captured, so its level in decibels can be read.</summary>
         private MMDevice? captureSource;
 
+        /// <summary>Whether the master volume should be divided back out at all.</summary>
+        private volatile bool makeUpEnabled = true;
+
+        /// <summary>Ticks of Environment.TickCount64 when the level was last read.</summary>
+        private long lastGainCheck;
+
+        /// <summary>
+        /// Re-reads the source's level and updates the distribution gain.
+        ///
+        /// The engine does this itself, on a short interval, rather than waiting to be told.
+        /// Relying on a volume notification reaching the UI and the UI passing it down left
+        /// the correction frozen at whatever it was when mirroring started - so turning the
+        /// PC volume down afterwards still dragged every consumer down with it.
+        /// </summary>
+        private void RefreshDistributionGain()
+        {
+            long now = Environment.TickCount64;
+            if (now - lastGainCheck < 200) return;
+            lastGainCheck = now;
+
+            float wanted = makeUpEnabled ? MakeUpGainForDevice(captureSource) : 1.0f;
+            distributionGain = wanted;
+            sourceMeterGain = makeUpEnabled ? 1.0f : MakeUpGainForDevice(captureSource);
+        }
+
         /// <summary>Peak of the captured source, corrected for the default device's volume.</summary>
         public float SourcePeakLevel { get; private set; }
 
@@ -368,17 +395,11 @@ namespace SoundSync.Services
         /// <summary>Applies the make-up gain to every live output.</summary>
         public void ApplyMakeUpGain(List<DeviceItem> activeDevices, float defaultDeviceVolume, bool enabled)
         {
-            // Read the real level in decibels from the endpoint. The 0..1 scalar passed in is
-            // a slider position, not an amplitude, and using it under-compensates by half.
-            float full = MakeUpGainForDevice(captureSource);
-
-            // Layer 2 carries the correction, so local outputs and network listeners get the
-            // same clean signal. Layer 3 is left at unity for each output's own settings.
-            distributionGain = enabled ? full : 1.0f;
-
-            // Meters always read as if the correction were on, even when it is not: a bar
-            // that tracks a volume knob says nothing about whether audio is arriving.
-            sourceMeterGain = enabled ? 1.0f : full;
+            // Record the preference; the value itself is re-read from the endpoint's decibel
+            // level on a short interval, so it stays right even if nothing tells us again.
+            makeUpEnabled = enabled;
+            lastGainCheck = 0;
+            RefreshDistributionGain();
 
             foreach (var item in activeDevices)
                 if (item.VolumeProvider != null)
