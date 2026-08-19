@@ -218,6 +218,7 @@ namespace SoundSync
             LinkAuth.Configure(appSettings.LinkTokenKeyFile);
             RefreshLinkTokenSource();
             ReloadDevices();
+            StartEnvironmentWatcher();
             CheckForUpdatesAsync();
 
             // Reconnect by itself when the user asked for it, or when Windows launched us
@@ -579,6 +580,113 @@ namespace SoundSync
                 ? "Listeners can now change this PC's outputs. Anyone holding the link can do it."
                 : "Listeners can see the outputs but not change them.";
             StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
+        }
+
+        // ---- recovering when the audio setup changes underneath ----------------------
+
+        private AudioEnvironmentWatcher? environmentWatcher;
+        private System.Windows.Threading.DispatcherTimer? recoveryTimer;
+        private string pendingRecoveryReason = string.Empty;
+        private bool expectingOwnDefaultChange;
+        private bool resumeWhenOutputsReturn;
+
+        private void StartEnvironmentWatcher()
+        {
+            if (environmentWatcher != null) return;
+
+            environmentWatcher = new AudioEnvironmentWatcher();
+            environmentWatcher.Changed += (kind, reason) =>
+                Dispatcher.BeginInvoke(new Action(() => ScheduleRecovery(kind, reason)));
+            environmentWatcher.Start();
+        }
+
+        /// <summary>
+        /// Rebuilds the device list, and the mirror session with it, after the audio setup
+        /// changed.
+        ///
+        /// Coalesced behind a short timer because these arrive in bursts: connecting over
+        /// Remote Desktop raises a session change and then a handful of device removals and
+        /// arrivals, and acting on each one would tear the session down and back up several
+        /// times over. Waiting for the dust to settle and rebuilding once is both faster and
+        /// quieter.
+        /// </summary>
+        private void ScheduleRecovery(AudioEnvironmentChange kind, string reason)
+        {
+            // A sample rate change raises device notifications of its own, and that path
+            // already rebuilds the session with a message of its own. Let it finish.
+            if (restartingAfterFormatChange) return;
+
+            // Same for the app switching the default output itself: the button handler has
+            // already stopped, switched and reloaded, and it says something more useful than
+            // this would.
+            if (kind == AudioEnvironmentChange.DefaultDevice && expectingOwnDefaultChange)
+            {
+                expectingOwnDefaultChange = false;
+                return;
+            }
+
+            pendingRecoveryReason = reason;
+
+            recoveryTimer ??= new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(1500)
+            };
+            recoveryTimer.Tick -= RecoveryTick;
+            recoveryTimer.Tick += RecoveryTick;
+
+            // Restart the wait, so a burst of notifications collapses into one rebuild.
+            recoveryTimer.Stop();
+            recoveryTimer.Start();
+
+            StatusText.Text = reason + " Rebuilding...";
+            StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusMutedBrush");
+        }
+
+        private void RecoveryTick(object? sender, EventArgs e)
+        {
+            recoveryTimer?.Stop();
+
+            // Remembered across events, because the outputs usually come back later than
+            // they went away. Connecting over Remote Desktop takes every physical output
+            // out of the session and leaves one "Remote Audio" endpoint behind - measured
+            // on this machine, where a set of five outputs became that single one - so
+            // there is nothing to mirror to until the session is handed back. Without
+            // remembering, mirroring would stop on the way out and never start again.
+            bool wantsMirroring = isConnected || resumeWhenOutputsReturn;
+
+            try
+            {
+                if (isConnected) Disconnect();
+                ReloadDevices();
+
+                var listed = DeviceListBox.ItemsSource as List<DeviceItem> ?? new List<DeviceItem>();
+                bool haveTargets = listed.Any(i => i.IsSelected && !i.IsDefaultDevice);
+
+                if (wantsMirroring && haveTargets)
+                {
+                    Connect();
+                    if (isConnected)
+                    {
+                        resumeWhenOutputsReturn = false;
+                        StatusText.Text = pendingRecoveryReason + " Mirroring resumed.";
+                        StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusSuccessBrush");
+                        return;
+                    }
+                }
+
+                resumeWhenOutputsReturn = wantsMirroring;
+                StatusText.Text = pendingRecoveryReason +
+                                  (wantsMirroring
+                                      ? " Mirroring will resume when the outputs come back."
+                                      : " Device list refreshed.");
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusMutedBrush");
+            }
+            catch (Exception ex)
+            {
+                resumeWhenOutputsReturn = wantsMirroring;
+                StatusText.Text = "Could not recover after the audio setup changed: " + ex.Message;
+                StatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusErrorBrush");
+            }
         }
 
         // ---- recovering from a device format change ----------------------------------
@@ -1131,6 +1239,7 @@ namespace SoundSync
             bool wasConnected = audioEngine.IsConnected;
             if (wasConnected) Disconnect();
 
+            expectingOwnDefaultChange = true;
             if (!Services.SystemAudioConfig.SetAsDefault(item.Device))
             {
                 System.Windows.MessageBox.Show($"Windows refused to make {item.Name} the default output.");
@@ -1314,6 +1423,10 @@ namespace SoundSync
 
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
+            // Pressing the button settles the question either way: a deliberate DISCONNECT
+            // must not be undone later by outputs reappearing.
+            resumeWhenOutputsReturn = false;
+
             if (isConnected)
             {
                 Disconnect();
@@ -1534,6 +1647,8 @@ namespace SoundSync
         protected override void OnClosed(EventArgs e)
         {
             SaveCurrentProfile();
+            recoveryTimer?.Stop();
+            environmentWatcher?.Dispose();
             Disconnect();
 
             if (notifyIcon != null)
