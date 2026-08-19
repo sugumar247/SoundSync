@@ -46,12 +46,26 @@ namespace SoundSync.Models
         public string VolumePercent => $"{Volume * 100:F0}%";
 
         private bool _syncWithDefault;
-        /// <summary>Follow the PC's default device volume, keeping the ratio set here.</summary>
+        /// <summary>
+        /// Follow the PC's default device volume, keeping the ratio set here.
+        ///
+        /// Off by default: a listener's volume is its own. Ticking it - from the PC or from
+        /// the page, the two stay in step - makes the PC's volume carry this one along.
+        /// </summary>
         public bool SyncVolumeWithDefault
         {
             get => _syncWithDefault;
-            set { _syncWithDefault = value; OnPropertyChanged(); }
+            set
+            {
+                if (_syncWithDefault == value) return;
+                _syncWithDefault = value;
+                OnPropertyChanged();
+                SyncChanged?.Invoke(this);
+            }
         }
+
+        /// <summary>Set by the streamer so a change here reaches that listener's page.</summary>
+        public Action<LinkClient>? SyncChanged { get; set; }
 
         /// <summary>Ratio captured when the sync was switched on.</summary>
         public float VolumeRatioToDefault { get; set; } = 1.0f;

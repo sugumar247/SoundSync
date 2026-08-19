@@ -56,16 +56,43 @@ namespace SoundSync.Services
             }
         }
 
-        /// <summary>Sends a control message to one listener's browser.</summary>
+        private readonly Dictionary<Models.LinkClient, long> lastSent = new();
+
+        /// <summary>
+        /// Sends a listener its own state: volume and whether it is following the PC.
+        ///
+        /// Rate limited to ten a second. Dragging a slider raises hundreds of changes, and
+        /// every one of them would otherwise become a frame on a phone's Wi-Fi link, which
+        /// is enough traffic to stutter the audio the same socket is carrying.
+        /// </summary>
         private void SendControl(Models.LinkClient entry)
         {
             WebSocket? socket;
-            lock (clientLock) { controlSockets.TryGetValue(entry, out socket); }
+            lock (clientLock)
+            {
+                controlSockets.TryGetValue(entry, out socket);
+
+                long now = Environment.TickCount64;
+                lastSent.TryGetValue(entry, out long previous);
+                if (now - previous < 100) return;
+                lastSent[entry] = now;
+            }
             if (socket == null || socket.State != WebSocketState.Open) return;
 
-            string json = $"{{\"type\":\"volume\",\"value\":{entry.Volume.ToString(System.Globalization.CultureInfo.InvariantCulture)}}}";
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            string json = "{\"type\":\"listener\",\"volume\":"
+                          + entry.Volume.ToString(culture)
+                          + ",\"sync\":" + (entry.SyncVolumeWithDefault ? "true" : "false") + "}";
+
             var bytes = Encoding.UTF8.GetBytes(json);
             _ = socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        /// <summary>Pushes a listener's state now, ignoring the rate limit.</summary>
+        public void SendListenerState(Models.LinkClient entry)
+        {
+            lock (clientLock) { lastSent[entry] = 0; }
+            SendControl(entry);
         }
 
         private Models.LinkClient RegisterClient(TcpClient tcpClient, List<string> headers, string kind)
@@ -81,6 +108,7 @@ namespace SoundSync.Services
             };
 
             entry.VolumeChanged = SendControl;
+            entry.SyncChanged = SendListenerState;
             lock (clientLock) { connectedClients.Add(entry); }
             ClientsChanged?.Invoke();
             return entry;
@@ -89,7 +117,7 @@ namespace SoundSync.Services
         private void UnregisterClient(Models.LinkClient? entry)
         {
             if (entry == null) return;
-            lock (clientLock) { connectedClients.Remove(entry); controlSockets.Remove(entry); }
+            lock (clientLock) { connectedClients.Remove(entry); controlSockets.Remove(entry); lastSent.Remove(entry); }
             ClientsChanged?.Invoke();
         }
 
@@ -736,6 +764,16 @@ namespace SoundSync.Services
                On: playback speeds up by up to 5% until it catches up with the PC, and the buffer
                is chosen for you. A gap too large to stretch away is skipped instead.</p>
             <div class='ctl-row'>
+                <label class='ctl-check'>
+                    <input type='checkbox' id='vsyncCtl'>
+                    <span>VOLUME SYNC WITH PC</span>
+                </label>
+            </div>
+            <p class='ctl-hint'>Off: this device's volume is its own, and the PC's volume does
+               not touch it. On: it follows the PC, keeping the balance it had when you ticked
+               it. The same tick appears next to this listener on the PC, and either side can
+               change it.</p>
+            <div class='ctl-row'>
                 <label class='ctl-label' for='volCtl'>VOLUME</label>
                 <input type='range' id='volCtl' min='0' max='150' value='100'>
                 <span class='ctl-value' id='volVal'>100%</span>
@@ -817,6 +855,11 @@ namespace SoundSync.Services
         volCtl.addEventListener('input', () => {
             volVal.innerText = volCtl.value + '%';
             if (gainNode) gainNode.gain.value = volCtl.value / 100;
+            if (!applyingListenerState) sendVolume(volCtl.value / 100);
+        });
+        volCtl.addEventListener('change', () => {
+            lastVolSend = 0;
+            if (!applyingListenerState) sendVolume(volCtl.value / 100);
         });
         bufCtl.addEventListener('input', () => {
             bufVal.innerText = bufCtl.value + ' ms';
@@ -888,6 +931,23 @@ namespace SoundSync.Services
         const pcList = document.getElementById('pcList');
         const pcMode = document.getElementById('pcMode');
         let pcControllable = false;
+        const vsyncCtl = document.getElementById('vsyncCtl');
+        let applyingListenerState = false;
+
+        vsyncCtl.addEventListener('change', () => {
+            if (applyingListenerState) return;
+            sendCommand({ type: 'listenerSync', value: vsyncCtl.checked });
+        });
+
+        // Dragging raises a change per pixel; ten a second is enough to feel immediate
+        // without turning the control channel into a flood on a phone's link.
+        let lastVolSend = 0;
+        function sendVolume(value) {
+            const now = Date.now();
+            if (now - lastVolSend < 100) return;
+            lastVolSend = now;
+            sendCommand({ type: 'listenerVolume', value: value });
+        }
 
         function sendCommand(obj) {
             if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
@@ -1059,6 +1119,16 @@ namespace SoundSync.Services
                     try {
                         const msg = JSON.parse(event.data);
                         if (msg.type === 'devices') { renderDevices(msg); return; }
+                        if (msg.type === 'listener') {
+                            applyingListenerState = true;
+                            const pct = Math.round(msg.volume * 100);
+                            volCtl.value = pct;
+                            volVal.innerText = pct + '%';
+                            if (gainNode) gainNode.gain.value = msg.volume;
+                            vsyncCtl.checked = !!msg.sync;
+                            applyingListenerState = false;
+                            return;
+                        }
                         if (msg.type === 'volume') {
                             const pct = Math.round(msg.value * 100);
                             volCtl.value = pct;

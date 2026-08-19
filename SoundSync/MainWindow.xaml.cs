@@ -468,14 +468,46 @@ namespace SoundSync
         /// <summary>Applies a command the page sent back. Ignored unless remote control is on.</summary>
         private void HandleRemoteCommand(string json)
         {
-            if (!appSettings.AllowRemoteControl) return;
-
             try
             {
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
                 if (!root.TryGetProperty("type", out var typeProp)) return;
                 string type = typeProp.GetString() ?? string.Empty;
+
+                bool ownSettings = type == "listenerVolume" || type == "listenerSync";
+                if (!ownSettings && !appSettings.AllowRemoteControl) return;
+
+                // A listener changing its OWN volume or sync is not remote control of the
+                // PC: it only affects that listener. It works whether or not the machine is
+                // handing out control of its outputs.
+                if (type == "listenerVolume" || type == "listenerSync")
+                {
+                    var self = linkServer?.GetClients().FirstOrDefault(c => c.IsControllable);
+                    if (self == null) return;
+
+                    if (type == "listenerVolume" && root.TryGetProperty("value", out var lv))
+                    {
+                        self.SyncVolumeWithDefault = false;   // touching it by hand breaks the tie
+                        self.Volume = (float)Math.Clamp(lv.GetDouble(), 0, 1.5);
+                    }
+                    else if (type == "listenerSync" && root.TryGetProperty("value", out var ls))
+                    {
+                        bool wanted = ls.GetBoolean();
+                        if (wanted)
+                        {
+                            var reference = allItems.FirstOrDefault(i => i.IsDefaultDevice)?.SystemVolume ?? 0f;
+                            self.VolumeRatioToDefault = reference > 0.001f
+                                ? Math.Clamp(self.Volume / reference, 0f, 4f)
+                                : 1.0f;
+                        }
+                        self.SyncVolumeWithDefault = wanted;
+                        ApplyRemoteVolumeSync();
+                    }
+
+                    RefreshRemoteListeners();
+                    return;
+                }
 
                 if (type == "refresh") { PushDeviceSnapshot(); return; }
                 if (!root.TryGetProperty("id", out var idProp)) return;
@@ -1283,6 +1315,8 @@ namespace SoundSync
                 {
                     RefreshRemoteListeners();
                     PushDeviceSnapshot();
+                    foreach (var c in linkServer?.GetClients() ?? new List<LinkClient>())
+                        (linkServer as NetworkStreamer)?.SendListenerState(c);
                 }));
                 linkServer.CommandReceived += json => Dispatcher.BeginInvoke(new Action(() => HandleRemoteCommand(json)));
 
