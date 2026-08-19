@@ -436,9 +436,25 @@ namespace SoundSync
         /// Sends the page a snapshot of the outputs, so it can show the same list the PC
         /// shows. Only what the page needs to draw and drive a row goes over the wire.
         /// </summary>
+        private string lastSnapshot = string.Empty;
+        private long lastSnapshotAt;
+
+        /// <summary>
+        /// Sends the page a snapshot of the outputs, at most four times a second and only
+        /// when something in it actually changed.
+        ///
+        /// It used to go out on every command and on every volume notification Windows
+        /// raised - about a kilobyte each, ten times a second while a slider was moving,
+        /// down the same socket as the audio, and each one rebuilding the whole list in the
+        /// browser. That is what made the controls feel slow: not the commands, the replies.
+        /// </summary>
         private void PushDeviceSnapshot()
         {
             if (linkServer == null || !isConnected) return;
+
+            long now = Environment.TickCount64;
+            if (now - lastSnapshotAt < 250) return;
+            lastSnapshotAt = now;
 
             var rows = allItems
                 .Where(i => !i.IsHidden)
@@ -462,7 +478,18 @@ namespace SoundSync
                 devices = rows
             };
 
-            try { linkServer.SendToAll(JsonSerializer.Serialize(payload)); } catch { }
+            try
+            {
+                string json = JsonSerializer.Serialize(payload);
+
+                // Nothing moved, nothing to say. Dragging a listener's own volume does not
+                // touch this list at all, so it should cost no traffic and no redraw.
+                if (json == lastSnapshot) return;
+                lastSnapshot = json;
+
+                linkServer.SendToAll(json);
+            }
+            catch { }
         }
 
         /// <summary>Applies a command the page sent back. Ignored unless remote control is on.</summary>
@@ -506,11 +533,13 @@ namespace SoundSync
                         ApplyRemoteVolumeSync();
                     }
 
+                    // Deliberately no device snapshot here: a listener changing its own
+                    // volume has not altered the PC's outputs, so there is nothing to resend.
                     RefreshRemoteListeners();
                     return;
                 }
 
-                if (type == "refresh") { PushDeviceSnapshot(); return; }
+                if (type == "refresh") { lastSnapshot = string.Empty; PushDeviceSnapshot(); return; }
                 if (!root.TryGetProperty("id", out var idProp)) return;
 
                 string id = idProp.GetString() ?? string.Empty;

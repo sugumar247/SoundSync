@@ -37,6 +37,20 @@ namespace SoundSync.Services
         /// <summary>Raised for every command a listener's page sends back.</summary>
         public event Action<string>? CommandReceived;
 
+        /// <summary>Describes the stream the listeners are being fed.</summary>
+        private string FormatMessage() =>
+            $"{{\"type\":\"format\",\"rate\":{streamSampleRate},\"channels\":{streamChannels}}}";
+
+        private static async Task SendTextAsync(WebSocket socket, string json, CancellationToken token)
+        {
+            try
+            {
+                var bytes = Encoding.UTF8.GetBytes(json);
+                await socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, token);
+            }
+            catch { }
+        }
+
         /// <summary>Pushes a text message to every connected browser.</summary>
         public void SendToAll(string json)
         {
@@ -165,8 +179,10 @@ namespace SoundSync.Services
 
         public void Start(int sampleRate, int channels, int port)
         {
+            bool formatChanged = streamSampleRate != sampleRate || streamChannels != Math.Max(1, channels);
             streamSampleRate = sampleRate;
             streamChannels = Math.Max(1, channels);
+            if (formatChanged) SendToAll(FormatMessage());
 
             htmlPage = GetHtmlTemplate()
                 .Replace("{{SAMPLE_RATE}}", sampleRate.ToString())
@@ -299,6 +315,13 @@ namespace SoundSync.Services
                     }
                     var browserEntry = RegisterClient(tcpClient, headers, "browser");
                     lock (clientLock) { controlSockets[browserEntry] = webSocket; }
+
+                    // Tell it the format now rather than relying on what was baked into the
+                    // page when the server started. The source can change under a listener -
+                    // a different default device, a different channel count - and a page
+                    // holding a stale channel count plays the audio at the wrong speed,
+                    // which is heard as the whole stream being shifted in pitch.
+                    await SendTextAsync(webSocket, FormatMessage(), token);
 
                     byte[] receiveBuffer = new byte[8192];
                     while (webSocket.State == WebSocketState.Open && !token.IsCancellationRequested)
@@ -747,7 +770,7 @@ namespace SoundSync.Services
             </div>
             <div class='hud-item'>
                 <div class='hud-label'>Sample Rate</div>
-                <div class='hud-value'>{{SAMPLE_RATE}} Hz</div>
+                <div class='hud-value' id='rateHud'>{{SAMPLE_RATE}} Hz</div>
             </div>
         </div>
         <div class='visualizer-container' id='visualizerBox'>
@@ -814,6 +837,12 @@ namespace SoundSync.Services
         const bgGlow = document.getElementById('bgGlow');
         const canvas = document.getElementById('visualizerCanvas');
         const ctx = canvas.getContext('2d');
+        // Starting values from the page; replaced by what the server reports on connect.
+        // Trusting only the baked-in numbers meant a page opened before the source changed
+        // kept de-interleaving with the old channel count, which plays everything at the
+        // wrong speed and sounds like the stream was transposed.
+        let streamRate = {{SAMPLE_RATE}};
+        let streamChannels = {{CHANNELS}};
         let audioCtx = null;
         let gainNode = null;
         let mediaDest = null;
@@ -850,7 +879,7 @@ namespace SoundSync.Services
         // never get played. Choosing the quietest part, and fading across the seam, is what
         // keeps it from being heard as a click or a stutter.
         function trimQuietest(data, channels, wantMs) {
-            const rate = {{SAMPLE_RATE}};
+            const rate = streamRate;
             const frames = data.length / channels;
             let cutFrames = Math.floor(wantMs * rate / 1000);
             const fadeFrames = Math.floor(TRIM_FADE_MS * rate / 1000);
@@ -1218,6 +1247,13 @@ namespace SoundSync.Services
                 if (typeof event.data === 'string') {
                     try {
                         const msg = JSON.parse(event.data);
+                        if (msg.type === 'format') {
+                            if (msg.rate > 0) streamRate = msg.rate;
+                            if (msg.channels > 0) streamChannels = msg.channels;
+                            const hud = document.getElementById('rateHud');
+                            if (hud) hud.innerText = streamRate + ' Hz';
+                            return;
+                        }
                         if (msg.type === 'devices') {
                             if (listHeld()) { pendingSnapshot = msg; }
                             else { renderDevices(msg); }
@@ -1251,7 +1287,7 @@ namespace SoundSync.Services
                 }
                 const arrayBuffer = event.data;
                 let floatData = new Float32Array(arrayBuffer);
-                const channels = {{CHANNELS}}; 
+                const channels = streamChannels; 
 
                 if (autoSync) {
                     const queued = startTime - audioCtx.currentTime;
@@ -1273,7 +1309,7 @@ namespace SoundSync.Services
                 }
 
                 const sampleCount = floatData.length / channels;
-                const audioBuffer = audioCtx.createBuffer(channels, sampleCount, {{SAMPLE_RATE}});
+                const audioBuffer = audioCtx.createBuffer(channels, sampleCount, streamRate);
                 for (let channel = 0; channel < channels; channel++) {
                     const nowBuffering = audioBuffer.getChannelData(channel);
                     for (let i = 0; i < sampleCount; i++) {
