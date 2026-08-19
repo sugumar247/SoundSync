@@ -950,6 +950,18 @@ namespace SoundSync.Services
         // Dragging raises a change per pixel; ten a second is enough to feel immediate
         // without turning the control channel into a flood on a phone's link.
         let lastVolSend = 0;
+
+        // While a finger or a mouse is on a control, updates from the PC are held back for
+        // it. They are legitimate - a volume tied to the PC really did move - but applying
+        // one mid-drag fights the person doing the dragging. The lock lifts shortly after
+        // the last interaction, and the next update from the PC lands normally.
+        let holdUntil = 0;
+        const HOLD_MS = 700;
+        function touching() { return Date.now() < holdUntil; }
+        function holdNow() { holdUntil = Date.now() + HOLD_MS; }
+
+        ['pointerdown','pointermove','touchstart','touchmove','mousedown','input']
+            .forEach(evt => volCtl.addEventListener(evt, holdNow));
         function sendVolume(value) {
             const now = Date.now();
             if (now - lastVolSend < 100) return;
@@ -1129,10 +1141,14 @@ namespace SoundSync.Services
                         if (msg.type === 'devices') { renderDevices(msg); return; }
                         if (msg.type === 'listener') {
                             applyingListenerState = true;
-                            const pct = Math.round(msg.volume * 100);
-                            volCtl.value = pct;
-                            volVal.innerText = pct + '%';
+                            // The gain follows immediately either way - what is held back is
+                            // moving the slider under the user's finger.
                             if (gainNode) gainNode.gain.value = msg.volume;
+                            if (!touching()) {
+                                const pct = Math.round(msg.volume * 100);
+                                volCtl.value = pct;
+                                volVal.innerText = pct + '%';
+                            }
                             vsyncCtl.checked = !!msg.sync;
                             applyingListenerState = false;
                             return;
