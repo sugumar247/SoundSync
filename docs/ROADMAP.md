@@ -44,3 +44,39 @@ probably a separate opt-in from merely listening.
 
 1 first: it is small, and it makes 2 and 3 easier to reason about because you can see who is
 connected. Then 2. Then 3.
+
+---
+
+# Signal path, as layers
+
+Agreed shape for the audio path, so every consumer draws from the same clean signal
+instead of inheriting whatever the one before it did.
+
+## Layer 1 — compatibility
+
+Only what is needed to make the signal usable by a given destination: sample rate and
+channel layout. No taste, no adjustment. `FormatAdapter` and `ChannelMapSampleProvider`.
+
+## Layer 2 — distribution
+
+One clean copy of the source that everyone takes from.
+
+WASAPI loopback hands over audio **after** the default device's volume has been applied,
+so the raw capture already carries the master's setting. Layer 2 divides that back out
+once, in the capture callback, and both the local outputs and the network listeners read
+the result. Nobody inherits the master volume any more.
+
+Anything that wants the pure signal takes it here.
+
+## Layer 3 — adjustments
+
+Per-consumer, and only per-consumer: volume, equaliser, delay. A local output applies its
+own; a browser applies its own in its gain node. One consumer's settings can never reach
+another's.
+
+## Why this order
+
+The failure it prevents is real and was hit in practice: the phone stream was reading from
+the raw capture, so turning the PC volume down turned the phone down too, and no amount of
+raising the phone's own volume could recover a signal that had already been attenuated
+before it left the machine.

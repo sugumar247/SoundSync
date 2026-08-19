@@ -142,17 +142,46 @@ namespace SoundSync.Services
                 bool captureIsFloat = captureFormat.Encoding == WaveFormatEncoding.IeeeFloat
                                       && captureFormat.BitsPerSample == 32;
 
+                // Scratch space for the distribution layer, reused so the capture callback
+                // does not allocate on every packet.
+                byte[] distribution = Array.Empty<byte>();
+
                 loopbackCapture.DataAvailable += (s, args) =>
                 {
-                    networkStreamer.BroadcastAudio(args.Buffer, args.BytesRecorded);
+                    // ---- layer 2: distribution -------------------------------------
+                    //
+                    // One clean copy of the source, with the default device's volume divided
+                    // back out, that every consumer draws from - the local outputs and the
+                    // network listeners alike. Loopback capture is post-volume, so without
+                    // this step everything downstream inherits whatever the master happened
+                    // to be set to, and a listener on a phone could never reach full level.
+                    //
+                    // Per-consumer volume, equaliser and delay come after this, in layer 3,
+                    // so no consumer's settings can leak into another's.
+                    byte[] source = args.Buffer;
+                    int sourceBytes = args.BytesRecorded;
+
+                    float gain = distributionGain;
+                    if (captureIsFloat && Math.Abs(gain - 1.0f) > 0.001f)
+                    {
+                        if (distribution.Length < sourceBytes) distribution = new byte[sourceBytes];
+                        for (int i = 0; i + 3 < sourceBytes; i += 4)
+                        {
+                            float v = BitConverter.ToSingle(args.Buffer, i) * gain;
+                            BitConverter.TryWriteBytes(distribution.AsSpan(i, 4), Math.Clamp(v, -1f, 1f));
+                        }
+                        source = distribution;
+                    }
+
+                    networkStreamer.BroadcastAudio(source, sourceBytes);
 
                     // Level of the source itself, before this app or any output touches it.
                     if (captureIsFloat)
                     {
                         float peak = 0f;
-                        for (int i = 0; i + 3 < args.BytesRecorded; i += 4)
+                        for (int i = 0; i + 3 < sourceBytes; i += 4)
                         {
-                            float v = Math.Abs(BitConverter.ToSingle(args.Buffer, i));
+                            float v = Math.Abs(BitConverter.ToSingle(source, i));
                             if (v > peak) peak = v;
                         }
                         SourcePeakLevel = Math.Clamp(peak * sourceMeterGain, 0f, 1f);
@@ -188,7 +217,7 @@ namespace SoundSync.Services
                                 buffer.AddSamples(silence, 0, bytesToPad);
                             }
                         }
-                        buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);
+                        buffer.AddSamples(source, 0, sourceBytes);
                     }
                 };
                 // Windows kills the capture when the source endpoint is reconfigured or
@@ -269,11 +298,21 @@ namespace SoundSync.Services
         /// </summary>
         private volatile float sourceMeterGain = 1.0f;
 
+        /// <summary>
+        /// Gain applied once, at the distribution layer, to undo the default device's volume.
+        /// Every consumer draws from the result, so no one inherits the master's setting.
+        /// </summary>
+        private volatile float distributionGain = 1.0f;
+
         /// <summary>Peak of the captured source, corrected for the default device's volume.</summary>
         public float SourcePeakLevel { get; private set; }
 
         /// <summary>Tells the engine what the default device's volume is right now.</summary>
-        public void SetDefaultDeviceVolume(float volume) => sourceMeterGain = MakeUpGainFor(volume);
+        public void SetDefaultDeviceVolume(float volume)
+        {
+            // Only meaningful while the correction is off; ApplyMakeUpGain sets both.
+            if (Math.Abs(distributionGain - 1.0f) < 0.001f) sourceMeterGain = MakeUpGainFor(volume);
+        }
 
         /// <summary>
         /// Cancels the default device's volume out of the mirrored signal.
@@ -293,10 +332,19 @@ namespace SoundSync.Services
         /// <summary>Applies the make-up gain to every live output.</summary>
         public void ApplyMakeUpGain(List<DeviceItem> activeDevices, float defaultDeviceVolume, bool enabled)
         {
-            float gain = enabled ? MakeUpGainFor(defaultDeviceVolume) : 1.0f;
+            float full = MakeUpGainFor(defaultDeviceVolume);
+
+            // Layer 2 carries the correction, so local outputs and network listeners get the
+            // same clean signal. Layer 3 is left at unity for each output's own settings.
+            distributionGain = enabled ? full : 1.0f;
+
+            // Meters always read as if the correction were on, even when it is not: a bar
+            // that tracks a volume knob says nothing about whether audio is arriving.
+            sourceMeterGain = enabled ? 1.0f : full;
+
             foreach (var item in activeDevices)
                 if (item.VolumeProvider != null)
-                    item.VolumeProvider.Volume = gain;
+                    item.VolumeProvider.Volume = 1.0f;
         }
 
         public void UpdateRelativeDelays(List<DeviceItem> activeDevices)
