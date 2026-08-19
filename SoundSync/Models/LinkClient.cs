@@ -24,6 +24,31 @@ namespace SoundSync.Models
         /// <summary>Set by the streamer so a volume change here reaches that listener.</summary>
         public Action<LinkClient>? VolumeChanged { get; set; }
 
+        /// <summary>
+        /// Applies a change the listener itself asked for, without telling it again.
+        ///
+        /// Echoing it back fights the person dragging: the reply is rate limited, so it
+        /// arrives late carrying a value from a moment ago and yanks the slider backwards.
+        /// The PC's own list still updates, because that goes through the property change.
+        /// </summary>
+        public void SetFromListener(float volume, bool? sync = null)
+        {
+            var echo = VolumeChanged;
+            var syncEcho = SyncChanged;
+            VolumeChanged = null;
+            SyncChanged = null;
+            try
+            {
+                if (sync.HasValue) SyncVolumeWithDefault = sync.Value;
+                Volume = volume;
+            }
+            finally
+            {
+                VolumeChanged = echo;
+                SyncChanged = syncEcho;
+            }
+        }
+
         private float _volume = 1.0f;
         /// <summary>
         /// Playback level for this listener, 0..1.5. Applied in the browser's own gain node,

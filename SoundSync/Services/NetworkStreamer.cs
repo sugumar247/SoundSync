@@ -503,7 +503,14 @@ namespace SoundSync.Services
             padding: 0;
             user-select: none;
         }
+        html {
+            /* The body alone does not clip an absolutely positioned child that is wider
+               than the screen, which is what let the whole page slide sideways. */
+            overflow-x: hidden;
+            max-width: 100%;
+        }
         body {
+            max-width: 100%;
             background-color: var(--bg);
             background-image: 
                 radial-gradient(circle at 50% 50%, rgba(20, 15, 12, 0.8) 0%, rgba(10, 8, 8, 0.95) 100%),
@@ -523,9 +530,10 @@ namespace SoundSync.Services
             position: relative;
         }
         .ambient-glow {
-            position: absolute;
-            width: 700px;
-            height: 700px;
+            position: fixed;
+            pointer-events: none;
+            width: min(700px, 100vw);
+            height: min(700px, 100vw);
             background: radial-gradient(circle, rgba(168, 5, 5, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
             top: 50%;
             left: 50%;

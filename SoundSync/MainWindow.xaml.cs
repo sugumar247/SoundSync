@@ -488,8 +488,9 @@ namespace SoundSync
 
                     if (type == "listenerVolume" && root.TryGetProperty("value", out var lv))
                     {
-                        self.SyncVolumeWithDefault = false;   // touching it by hand breaks the tie
-                        self.Volume = (float)Math.Clamp(lv.GetDouble(), 0, 1.5);
+                        // Reaching for a volume control unties it, and the value is applied
+                        // without being echoed back to the page that just sent it.
+                        self.SetFromListener((float)Math.Clamp(lv.GetDouble(), 0, 1.5), sync: false);
                     }
                     else if (type == "listenerSync" && root.TryGetProperty("value", out var ls))
                     {
@@ -501,7 +502,7 @@ namespace SoundSync
                                 ? Math.Clamp(self.Volume / reference, 0f, 4f)
                                 : 1.0f;
                         }
-                        self.SyncVolumeWithDefault = wanted;
+                        self.SetFromListener(self.Volume, sync: wanted);
                         ApplyRemoteVolumeSync();
                     }
 
