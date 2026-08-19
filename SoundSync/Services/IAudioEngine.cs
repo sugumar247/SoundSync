@@ -14,6 +14,7 @@ namespace SoundSync.Services
         void UpdateRelativeDelays(List<DeviceItem> activeDevices);
         void SetDefaultDeviceVolume(float volume);
         float SourcePeakLevel { get; }
+        bool IsPreVolumeCapture { get; }
         bool IsConnected { get; }
     }
 }

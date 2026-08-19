@@ -14,7 +14,13 @@ namespace SoundSync.Services
     public class AudioEngine : IAudioEngine
     {
         private MMDeviceEnumerator? enumerator;
-        private WasapiLoopbackCapture? loopbackCapture;
+        private IWaveIn? loopbackCapture;
+
+        /// <summary>True when the source is captured before the output device's volume.</summary>
+        private volatile bool usingPreVolumeCapture;
+
+        /// <summary>Whether this session is reading the signal before any volume is applied.</summary>
+        public bool IsPreVolumeCapture => usingPreVolumeCapture;
         private readonly List<WasapiOut> outputStreams = new List<WasapiOut>();
         private readonly List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
         private bool isConnected = false;
@@ -36,7 +42,34 @@ namespace SoundSync.Services
                 enumerator ??= new MMDeviceEnumerator();
                 var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
                 captureSource = defaultDevice;
-                loopbackCapture = new WasapiLoopbackCapture();
+
+                // Prefer capturing the render streams themselves rather than the output
+                // device. Whether an endpoint applies its volume before the loopback tap
+                // turns out to depend on the device - measured here, an HDMI output scaled
+                // with the slider while a USB headset did not - so compensating for it means
+                // guessing, and guessing wrong means amplifying a signal that was never
+                // attenuated. Capturing before the endpoint removes the question.
+                usingPreVolumeCapture = false;
+                if (ProcessLoopbackCapture.IsSupported)
+                {
+                    try
+                    {
+                        var mix = defaultDevice.AudioClient.MixFormat;
+                        var preVolume = new ProcessLoopbackCapture(mix.SampleRate, mix.Channels);
+                        preVolume.StartRecording();
+                        preVolume.StopRecording();      // prove it activates before committing
+                        preVolume.Dispose();
+
+                        loopbackCapture = new ProcessLoopbackCapture(mix.SampleRate, mix.Channels);
+                        usingPreVolumeCapture = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logCallback("Falling back to output capture: " + ex.Message);
+                    }
+                }
+
+                loopbackCapture ??= new WasapiLoopbackCapture();
                 var captureFormat = loopbackCapture.WaveFormat;
 
                 var failures = new List<string>();
@@ -284,6 +317,7 @@ namespace SoundSync.Services
 
             SourcePeakLevel = 0f;
             captureSource = null;
+            usingPreVolumeCapture = false;
             isConnected = false;
         }
 
@@ -353,6 +387,14 @@ namespace SoundSync.Services
             long now = Environment.TickCount64;
             if (now - lastGainCheck < 200) return;
             lastGainCheck = now;
+
+            // Nothing to undo when the signal never had the volume applied to it.
+            if (usingPreVolumeCapture)
+            {
+                distributionGain = 1.0f;
+                sourceMeterGain = 1.0f;
+                return;
+            }
 
             float wanted = makeUpEnabled ? MakeUpGainForDevice(captureSource) : 1.0f;
             distributionGain = wanted;
