@@ -483,10 +483,15 @@ namespace SoundSync.Services
             color: var(--text-primary);
             font-family: 'Georgia', serif;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            /* The page grew past one screen once it carried the controls and the PC list,
+               and a phone in portrait could not reach the buttons at all. */
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 0 32px 0;
             position: relative;
         }
         .ambient-glow {

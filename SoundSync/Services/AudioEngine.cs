@@ -35,6 +35,7 @@ namespace SoundSync.Services
             {
                 enumerator ??= new MMDeviceEnumerator();
                 var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                captureSource = defaultDevice;
                 loopbackCapture = new WasapiLoopbackCapture();
                 var captureFormat = loopbackCapture.WaveFormat;
 
@@ -280,6 +281,7 @@ namespace SoundSync.Services
             }
 
             SourcePeakLevel = 0f;
+            captureSource = null;
             isConnected = false;
         }
 
@@ -304,6 +306,9 @@ namespace SoundSync.Services
         /// </summary>
         private volatile float distributionGain = 1.0f;
 
+        /// <summary>The device being captured, so its level in decibels can be read.</summary>
+        private MMDevice? captureSource;
+
         /// <summary>Peak of the captured source, corrected for the default device's volume.</summary>
         public float SourcePeakLevel { get; private set; }
 
@@ -311,7 +316,7 @@ namespace SoundSync.Services
         public void SetDefaultDeviceVolume(float volume)
         {
             // Only meaningful while the correction is off; ApplyMakeUpGain sets both.
-            if (Math.Abs(distributionGain - 1.0f) < 0.001f) sourceMeterGain = MakeUpGainFor(volume);
+            if (Math.Abs(distributionGain - 1.0f) < 0.001f) sourceMeterGain = MakeUpGainForDevice(captureSource);
         }
 
         /// <summary>
@@ -329,10 +334,43 @@ namespace SoundSync.Services
             return Math.Clamp(1.0f / defaultDeviceVolume, 1.0f, MaxMakeUpGain);
         }
 
+        /// <summary>
+        /// Gain that undoes an endpoint's volume, worked out from the decibel value Windows
+        /// reports rather than from the 0..1 scalar.
+        ///
+        /// The scalar is a perceptual position on the slider, not an amplitude: at 40% Windows
+        /// is applying -13.9 dB, which is a factor of 0.202, not 0.4. Measured against a known
+        /// tone on this machine, amplitude = 10^(dB/20) predicts the captured level exactly at
+        /// every point, while treating the scalar as a factor under-compensates by half.
+        /// </summary>
+        public static float MakeUpGainForDecibels(float decibels)
+        {
+            if (float.IsNaN(decibels) || float.IsInfinity(decibels)) return 1.0f;
+
+            double factor = Math.Pow(10.0, decibels / 20.0);
+            if (factor <= 0.0001) return 1.0f;                // effectively silent, nothing to lift
+
+            return (float)Math.Clamp(1.0 / factor, 1.0, MaxMakeUpGain);
+        }
+
+        /// <summary>Reads the endpoint's level in decibels and returns the gain that undoes it.</summary>
+        public static float MakeUpGainForDevice(MMDevice? device)
+        {
+            if (device == null) return 1.0f;
+            try
+            {
+                if (device.AudioEndpointVolume.Mute) return 1.0f;
+                return MakeUpGainForDecibels(device.AudioEndpointVolume.MasterVolumeLevel);
+            }
+            catch { return 1.0f; }
+        }
+
         /// <summary>Applies the make-up gain to every live output.</summary>
         public void ApplyMakeUpGain(List<DeviceItem> activeDevices, float defaultDeviceVolume, bool enabled)
         {
-            float full = MakeUpGainFor(defaultDeviceVolume);
+            // Read the real level in decibels from the endpoint. The 0..1 scalar passed in is
+            // a slider position, not an amplitude, and using it under-compensates by half.
+            float full = MakeUpGainForDevice(captureSource);
 
             // Layer 2 carries the correction, so local outputs and network listeners get the
             // same clean signal. Layer 3 is left at unity for each output's own settings.
