@@ -769,7 +769,7 @@ namespace SoundSync.Services
             </div>
             <p class='ctl-hint' id='syncHint'>Off: the buffer below is whatever you set, and if the
                stream falls behind - locking the phone, a weak signal - it stays behind.
-               On: playback speeds up by up to 5% until it catches up with the PC, and the buffer
+               On: playback speeds up by up to 2% until it catches up with the PC, and the buffer
                is chosen for you. A gap too large to stretch away is skipped instead.</p>
             <div class='ctl-row'>
                 <label class='ctl-check'>
@@ -832,7 +832,10 @@ namespace SoundSync.Services
         // skipped rather than stretched away - 5% of speed-up would take a minute to eat a
         // ten second backlog, so a big one is jumped instead.
         const AUTO_TARGET = 0.05;
-        const MAX_STRETCH = 1.05;
+        // 2%, about a third of a semitone. 5% was tried first and is plainly audible on
+        // music - roughly 0.85 of a semitone - so it is not something to do quietly behind
+        // someone's back. Catching up takes longer at 2%, which is the right trade.
+        const MAX_STRETCH = 1.02;
         const SKIP_THRESHOLD = 1.0;
         let autoSync = false;
         let currentRate = 1.0;
@@ -973,6 +976,36 @@ namespace SoundSync.Services
             if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
         }
 
+        // Ten a second per control while it is being moved, and always one final send when
+        // it is let go, so the value that sticks is the one the person actually chose.
+        function throttled(send) {
+            let last = 0;
+            return {
+                during(value) {
+                    const now = Date.now();
+                    if (now - last < 100) return;
+                    last = now;
+                    send(value);
+                },
+                final(value) { last = 0; send(value); }
+            };
+        }
+
+        // While a control on this page is being held, the PC's list is not redrawn. Rebuilding
+        // it would replace the very element under the finger, which reads as the drag being
+        // ignored until release.
+        let listHoldUntil = 0;
+        let pendingSnapshot = null;
+        function holdList() { listHoldUntil = Date.now() + 700; }
+        function listHeld() { return Date.now() < listHoldUntil; }
+        setInterval(() => {
+            if (pendingSnapshot && !listHeld()) {
+                const snap = pendingSnapshot;
+                pendingSnapshot = null;
+                renderDevices(snap);
+            }
+        }, 200);
+
         // Draws the PC's outputs. Read-only unless the PC has remote control switched on.
         function renderDevices(msg) {
             pcControllable = !!msg.controllable;
@@ -1000,8 +1033,9 @@ namespace SoundSync.Services
                 vol.type = 'range'; vol.min = 0; vol.max = 100;
                 vol.value = Math.round(d.volume * 100);
                 vol.disabled = !pcControllable;
-                vol.oninput = () => { pct.innerText = vol.value + '%'; };
-                vol.onchange = () => sendCommand({ type: 'volume', id: d.id, value: vol.value / 100 });
+                const volSend = throttled(v => sendCommand({ type: 'volume', id: d.id, value: v }));
+                vol.oninput = () => { pct.innerText = vol.value + '%'; holdList(); volSend.during(vol.value / 100); };
+                vol.onchange = () => { holdList(); volSend.final(vol.value / 100); };
 
                 const pct = document.createElement('span');
                 pct.className = 'ctl-value';
@@ -1018,8 +1052,9 @@ namespace SoundSync.Services
                     const dSlide = document.createElement('input');
                     dSlide.type = 'range'; dSlide.min = 0; dSlide.max = 500; dSlide.value = d.delay;
                     dSlide.disabled = !pcControllable;
-                    dSlide.oninput = () => { dVal.innerText = dSlide.value + ' ms'; };
-                    dSlide.onchange = () => sendCommand({ type: 'delay', id: d.id, value: parseInt(dSlide.value) });
+                    const delaySend = throttled(v => sendCommand({ type: 'delay', id: d.id, value: v }));
+                    dSlide.oninput = () => { dVal.innerText = dSlide.value + ' ms'; holdList(); delaySend.during(parseInt(dSlide.value)); };
+                    dSlide.onchange = () => { holdList(); delaySend.final(parseInt(dSlide.value)); };
                     const dVal = document.createElement('span');
                     dVal.className = 'ctl-value'; dVal.innerText = d.delay + ' ms';
                     dRow.appendChild(dLab); dRow.appendChild(dSlide); dRow.appendChild(dVal);
@@ -1138,7 +1173,11 @@ namespace SoundSync.Services
                 if (typeof event.data === 'string') {
                     try {
                         const msg = JSON.parse(event.data);
-                        if (msg.type === 'devices') { renderDevices(msg); return; }
+                        if (msg.type === 'devices') {
+                            if (listHeld()) { pendingSnapshot = msg; }
+                            else { renderDevices(msg); }
+                            return;
+                        }
                         if (msg.type === 'listener') {
                             applyingListenerState = true;
                             // The gain follows immediately either way - what is held back is
@@ -1198,7 +1237,9 @@ namespace SoundSync.Services
                     } else if (queued > AUTO_TARGET * 1.5) {
                         // Play slightly fast until the backlog is eaten. Capped at 5%, which
                         // is a small enough pitch change to pass unnoticed on speech or music.
-                        currentRate = Math.min(MAX_STRETCH, 1 + (queued - AUTO_TARGET));
+                        // Ease in proportionally rather than jumping to the cap, so a small
+                        // drift is corrected with a barely-there change of speed.
+                        currentRate = Math.min(MAX_STRETCH, 1 + (queued - AUTO_TARGET) * 0.2);
                         syncVal.innerText = Math.round(queued * 1000) + ' ms, catching up';
                     } else {
                         currentRate = 1.0;

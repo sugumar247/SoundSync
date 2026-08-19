@@ -171,7 +171,7 @@ namespace SoundSync.Services
                         for (int i = 0; i + 3 < sourceBytes; i += 4)
                         {
                             float v = BitConverter.ToSingle(args.Buffer, i) * gain;
-                            BitConverter.TryWriteBytes(distribution.AsSpan(i, 4), Math.Clamp(v, -1f, 1f));
+                            BitConverter.TryWriteBytes(distribution.AsSpan(i, 4), SoftLimit(v));
                         }
                         source = distribution;
                     }
@@ -293,6 +293,29 @@ namespace SoundSync.Services
         /// floor of a stream that had almost nothing left in it.
         /// </summary>
         private const float MaxMakeUpGain = 8.0f;
+
+        /// <summary>Above this the curve bends instead of the signal being cut off.</summary>
+        private const float LimitKnee = 0.85f;
+
+        /// <summary>
+        /// Keeps a lifted signal inside range without the hard edge of a clamp.
+        ///
+        /// Cutting a waveform off flat at 1.0 replaces its peaks with straight lines, which
+        /// is heard as harshness and as the level lurching about on loud passages. Below the
+        /// knee nothing is touched at all; above it the curve tapers so a peak that would
+        /// have overshot lands just under full scale instead of being sliced.
+        /// </summary>
+        private static float SoftLimit(float sample)
+        {
+            float magnitude = Math.Abs(sample);
+            if (magnitude <= LimitKnee) return sample;
+
+            float over = magnitude - LimitKnee;
+            float headroom = 1.0f - LimitKnee;
+            float shaped = LimitKnee + headroom * (over / (over + headroom));
+
+            return sample < 0 ? -shaped : shaped;
+        }
 
         /// <summary>
         /// Scale the signal meters use so they read the source material rather than whatever
