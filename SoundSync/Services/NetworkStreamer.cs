@@ -832,17 +832,63 @@ namespace SoundSync.Services
         // skipped rather than stretched away - 5% of speed-up would take a minute to eat a
         // ten second backlog, so a big one is jumped instead.
         const AUTO_TARGET = 0.05;
-        // 2%, about a third of a semitone. 5% was tried first and is plainly audible on
-        // music - roughly 0.85 of a semitone - so it is not something to do quietly behind
-        // someone's back. Catching up takes longer at 2%, which is the right trade.
-        const MAX_STRETCH = 1.02;
+        // Catching up by dropping tiny slices rather than by playing faster. playbackRate
+        // always moves the pitch - 2% is a third of a semitone and still audible on music -
+        // and the Web Audio API has no pitch preserving stretch. Removing a few milliseconds
+        // leaves the speed, and therefore the pitch, exactly alone.
+        const MAX_TRIM_MS = 15;      // never take more than this out of one packet
+        const TRIM_FADE_MS = 3;      // crossfade over the seam so it does not click
         const SKIP_THRESHOLD = 1.0;
         let autoSync = false;
-        let currentRate = 1.0;
 
         // The choice survives a reload, and comes back on next time it was left on.
         try { autoSync = localStorage.getItem('soundsync.realtime') === '1'; } catch (e) {}
         syncCtl.checked = autoSync;
+
+        // Removes the quietest span of `wantMs` from a packet, joined with a short
+        // crossfade. Speed and therefore pitch are untouched - a few milliseconds simply
+        // never get played. Choosing the quietest part, and fading across the seam, is what
+        // keeps it from being heard as a click or a stutter.
+        function trimQuietest(data, channels, wantMs) {
+            const rate = {{SAMPLE_RATE}};
+            const frames = data.length / channels;
+            let cutFrames = Math.floor(wantMs * rate / 1000);
+            const fadeFrames = Math.floor(TRIM_FADE_MS * rate / 1000);
+
+            // Leave enough either side to fade across, otherwise skip this packet.
+            if (cutFrames < 1 || frames < cutFrames + fadeFrames * 2 + 8) return data;
+
+            // Walk the packet in windows the size of the cut and keep the quietest one.
+            const step = Math.max(1, Math.floor(cutFrames / 4));
+            let bestStart = fadeFrames, bestEnergy = Infinity;
+            for (let f = fadeFrames; f + cutFrames + fadeFrames <= frames; f += step) {
+                let energy = 0;
+                for (let i = f; i < f + cutFrames; i += Math.max(1, Math.floor(cutFrames / 32))) {
+                    const v = data[i * channels];
+                    energy += v * v;
+                }
+                if (energy < bestEnergy) { bestEnergy = energy; bestStart = f; }
+            }
+
+            const out = new Float32Array((frames - cutFrames) * channels);
+            // Everything before the cut.
+            out.set(data.subarray(0, bestStart * channels), 0);
+            // Everything after it.
+            out.set(data.subarray((bestStart + cutFrames) * channels), bestStart * channels);
+
+            // Fade the join so the two sides meet without a step in the waveform.
+            for (let f = 0; f < fadeFrames; f++) {
+                const w = f / fadeFrames;
+                for (let c = 0; c < channels; c++) {
+                    const at = (bestStart - fadeFrames + f) * channels + c;
+                    if (at < 0 || at >= out.length) continue;
+                    const after = (bestStart + f) * channels + c;
+                    if (after >= out.length) continue;
+                    out[at] = out[at] * (1 - w) + out[after] * w;
+                }
+            }
+            return out;
+        }
 
         function applySyncMode() {
             autoSync = syncCtl.checked;
@@ -857,7 +903,6 @@ namespace SoundSync.Services
                 bufVal.innerText = bufCtl.value + ' ms';
                 leadSeconds = bufCtl.value / 1000;
                 syncVal.innerText = '';
-                currentRate = 1.0;
             }
         }
         syncCtl.addEventListener('change', applySyncMode);
@@ -1205,8 +1250,28 @@ namespace SoundSync.Services
                     audioCtx.resume();
                 }
                 const arrayBuffer = event.data;
-                const floatData = new Float32Array(arrayBuffer);
+                let floatData = new Float32Array(arrayBuffer);
                 const channels = {{CHANNELS}}; 
+
+                if (autoSync) {
+                    const queued = startTime - audioCtx.currentTime;
+
+                    if (queued > SKIP_THRESHOLD) {
+                        // Bigger than anything worth shaving away a few milliseconds at a
+                        // time: jump, and take the one audible gap instead of a long one.
+                        startTime = audioCtx.currentTime + AUTO_TARGET;
+                        syncVal.innerText = 'resync';
+                    } else if (queued > AUTO_TARGET * 1.5) {
+                        const wantMs = Math.min(MAX_TRIM_MS, (queued - AUTO_TARGET) * 1000);
+                        floatData = trimQuietest(floatData, channels, wantMs);
+                        syncVal.innerText = Math.round(queued * 1000) + ' ms, catching up';
+                    } else {
+                        syncVal.innerText = Math.round(queued * 1000) + ' ms';
+                    }
+                    bufVal.innerText = Math.round(Math.max(0, queued) * 1000) + ' ms';
+                    bufCtl.value = Math.max(bufCtl.min, Math.min(bufCtl.max, Math.round(queued * 1000)));
+                }
+
                 const sampleCount = floatData.length / channels;
                 const audioBuffer = audioCtx.createBuffer(channels, sampleCount, {{SAMPLE_RATE}});
                 for (let channel = 0; channel < channels; channel++) {
@@ -1224,36 +1289,8 @@ namespace SoundSync.Services
                     startTime = audioCtx.currentTime + (autoSync ? AUTO_TARGET : leadSeconds);
                 }
 
-                if (autoSync) {
-                    // How far ahead of real time we are scheduled - that IS the delay the
-                    // listener hears. Left alone it only ever grows: every stall adds to it.
-                    const queued = startTime - audioCtx.currentTime;
-
-                    if (queued > SKIP_THRESHOLD) {
-                        // Too big to stretch away without a long, obvious pitch shift.
-                        startTime = audioCtx.currentTime + AUTO_TARGET;
-                        currentRate = 1.0;
-                        syncVal.innerText = 'resync';
-                    } else if (queued > AUTO_TARGET * 1.5) {
-                        // Play slightly fast until the backlog is eaten. Capped at 5%, which
-                        // is a small enough pitch change to pass unnoticed on speech or music.
-                        // Ease in proportionally rather than jumping to the cap, so a small
-                        // drift is corrected with a barely-there change of speed.
-                        currentRate = Math.min(MAX_STRETCH, 1 + (queued - AUTO_TARGET) * 0.2);
-                        syncVal.innerText = Math.round(queued * 1000) + ' ms, catching up';
-                    } else {
-                        currentRate = 1.0;
-                        syncVal.innerText = Math.round(queued * 1000) + ' ms';
-                    }
-                    bufferSource.playbackRate.value = currentRate;
-                    bufVal.innerText = Math.round(queued * 1000) + ' ms';
-                    bufCtl.value = Math.max(bufCtl.min, Math.min(bufCtl.max, Math.round(queued * 1000)));
-                } else {
-                    currentRate = 1.0;
-                }
-
                 bufferSource.start(startTime);
-                startTime += audioBuffer.duration / currentRate;
+                startTime += audioBuffer.duration;
             };
             ws.onclose = () => {
                 btnText.innerText = 'DISCONNECTED';
