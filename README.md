@@ -30,9 +30,8 @@
   A lightweight, low-latency C# WPF application that captures your system's audio and routes it to multiple hardware output devices simultaneously. Built entirely on the Windows Core Audio API (WASAPI) using the NAudio library.
 </p>
 
-
-<img width="996" height="859" alt="SoundSync Red dead Edition(dark)" src="https://github.com/user-attachments/assets/ddebfa3e-aaeb-4e9c-a719-ff08a172a780" />
-<img width="991" height="855" alt="SoundSync Red dead Edition(light)" src="https://github.com/user-attachments/assets/e76ec91a-c8cd-4c0c-b2b5-80a3b0294b08" />
+<img width="1920" height="1011" alt="Screenshot (69)" src="https://github.com/user-attachments/assets/f6f0d33f-e3ae-4860-8a59-05aa843ec048" />
+<img width="1920" height="1008" alt="Screenshot (68)" src="https://github.com/user-attachments/assets/c0d65f88-4f3c-420b-8baa-0c77dd495e9a" />
 
 <img width="1920" height="894" alt="Screenshot (19)" src="https://github.com/user-attachments/assets/a9297c49-3057-4618-b716-a896aa24257f" />
 
