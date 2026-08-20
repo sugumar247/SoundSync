@@ -14,7 +14,13 @@ namespace SoundSync.Services
     public class AudioEngine : IAudioEngine
     {
         private MMDeviceEnumerator? enumerator;
-        private WasapiLoopbackCapture? loopbackCapture;
+        private IWaveIn? loopbackCapture;
+
+        /// <summary>True when the source is captured before the output device's volume.</summary>
+        private volatile bool usingPreVolumeCapture;
+
+        /// <summary>Whether this session is reading the signal before any volume is applied.</summary>
+        public bool IsPreVolumeCapture => usingPreVolumeCapture;
         private readonly List<WasapiOut> outputStreams = new List<WasapiOut>();
         private readonly List<BufferedWaveProvider> buffers = new List<BufferedWaveProvider>();
         private bool isConnected = false;
@@ -35,10 +41,42 @@ namespace SoundSync.Services
             {
                 enumerator ??= new MMDeviceEnumerator();
                 var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-                loopbackCapture = new WasapiLoopbackCapture();
+                captureSource = defaultDevice;
+
+                // Prefer capturing the render streams themselves rather than the output
+                // device. Whether an endpoint applies its volume before the loopback tap
+                // turns out to depend on the device - measured here, an HDMI output scaled
+                // with the slider while a USB headset did not - so compensating for it means
+                // guessing, and guessing wrong means amplifying a signal that was never
+                // attenuated. Capturing before the endpoint removes the question.
+                usingPreVolumeCapture = false;
+                if (ProcessLoopbackCapture.IsSupported)
+                {
+                    try
+                    {
+                        var mix = defaultDevice.AudioClient.MixFormat;
+                        var preVolume = new ProcessLoopbackCapture(mix.SampleRate, mix.Channels);
+                        preVolume.StartRecording();
+                        preVolume.StopRecording();      // prove it activates before committing
+                        preVolume.Dispose();
+
+                        loopbackCapture = new ProcessLoopbackCapture(mix.SampleRate, mix.Channels);
+                        usingPreVolumeCapture = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logCallback("Falling back to output capture: " + ex.Message);
+                    }
+                }
+
+                loopbackCapture ??= new WasapiLoopbackCapture();
                 var captureFormat = loopbackCapture.WaveFormat;
 
-                foreach (var deviceItem in selectedDevices)
+                var failures = new List<string>();
+
+                // The caller normally passes an already-filtered list, but honour IsSelected
+                // here too: an unticked device must never be opened, whoever calls this.
+                foreach (var deviceItem in selectedDevices.Where(d => d.IsSelected))
                 {
                     var device = deviceItem.Device;
                     if (device.ID == defaultDevice.ID)
@@ -46,14 +84,32 @@ namespace SoundSync.Services
                         continue;
                     }
 
-                    var wasapiOut = new WasapiOut(device, AudioClientShareMode.Shared, useEventSync: true, latency: 50);
+                    WasapiOut? wasapiOut = null;
+                    try
+                    {
+                    wasapiOut = new WasapiOut(device, AudioClientShareMode.Shared, useEventSync: true, latency: 30);
                     var buffer = new BufferedWaveProvider(captureFormat)
                     {
-                        BufferDuration = TimeSpan.FromMilliseconds(150),
+                        BufferDuration = TimeSpan.FromMilliseconds(100),
                         DiscardOnBufferOverflow = true
                     };
 
-                    var sampleProvider = buffer.ToSampleProvider();
+                    // Convert to exactly what this endpoint expects before anything else
+                    // touches the stream, so WASAPI is never asked to adapt a layout it
+                    // cannot handle. See FormatAdapter for why the order matters.
+                    WaveFormat outputFormat = GetOutputFormat(device, captureFormat);
+                    ISampleProvider sampleProvider = FormatAdapter.Adapt(
+                        buffer.ToSampleProvider(), outputFormat);
+
+                    // Meter the material BEFORE this output's volume, equaliser and delay, and
+                    // undo the default device's volume while reporting it. The bar then shows
+                    // what is actually playing rather than how loud any one knob is set, so all
+                    // the bars agree with each other and stop moving when a volume moves.
+                    sampleProvider = new MeteringSampleProvider(sampleProvider, peak =>
+                    {
+                        deviceItem.PeakLevel = Math.Clamp(peak * sourceMeterGain, 0f, 1f);
+                    });
+
                     var volumeProvider = new VolumeSampleProvider(sampleProvider) { Volume = deviceItem.Volume };
                     deviceItem.VolumeProvider = volumeProvider;
 
@@ -68,35 +124,110 @@ namespace SoundSync.Services
                     var delayProvider = new DelaySampleProvider(equalizerProvider) { DelayMilliseconds = 0 };
                     deviceItem.DelayProvider = delayProvider;
 
-                    var meterProvider = new MeteringSampleProvider(delayProvider, (peak) =>
-                    {
-                        deviceItem.PeakLevel = peak;
-                    });
-
-                    wasapiOut.Init(meterProvider.ToWaveProvider());
+                    wasapiOut.Init(FormatAdapter.AdaptToWaveProvider(delayProvider, outputFormat));
                     wasapiOut.Play();
                     outputStreams.Add(wasapiOut);
                     buffers.Add(buffer);
+                    deviceItem.OutputBuffer = buffer;
+                    deviceItem.EndpointLatencyMs = 30;
+                    }
+                    catch (Exception deviceError)
+                    {
+                        // One unusable output must not take the whole session down: drop
+                        // it, remember why, and keep mirroring to the rest.
+                        try { wasapiOut?.Dispose(); } catch { }
+                        deviceItem.VolumeProvider = null;
+                        deviceItem.EqualizerProvider = null;
+                        deviceItem.DelayProvider = null;
+                        deviceItem.OutputBuffer = null;
+                        string reason = AudioErrors.Explain(deviceError, deviceItem.Name, captureFormat, device);
+                        failures.Add(reason);
+                        logCallback(reason);
+                    }
                 }
 
                 if (outputStreams.Count == 0)
                 {
-                    throw new InvalidOperationException("Please select at least one secondary device to mirror your audio to.");
+                    throw new InvalidOperationException(failures.Count > 0
+                        ? "No output could be started.\n\n" + string.Join("\n\n", failures)
+                        : "Tick at least one device other than the default one. The default device is the source being mirrored, so it cannot also be a destination.");
+                }
+
+                if (failures.Count > 0)
+                {
+                    logCallback($"Mirroring to {outputStreams.Count} device(s); {failures.Count} skipped.");
                 }
 
                 UpdateRelativeDelays(selectedDevices);
 
-                networkStreamer.Start(captureFormat.SampleRate, 8090);
+                // The phone stream is a bonus, not the job. If its port is taken - another
+                // copy of SoundSync, or anything else on 8090 - mirroring must still run.
+                try
+                {
+                    networkStreamer.Start(captureFormat.SampleRate, captureFormat.Channels, 8090);
+                }
+                catch (Exception streamError)
+                {
+                    logCallback("Audio mirroring is running, but the phone stream could not start: " +
+                                streamError.Message +
+                                " Another copy of SoundSync, or another program, is using port 8090.");
+                }
+
+                bool captureIsFloat = captureFormat.Encoding == WaveFormatEncoding.IeeeFloat
+                                      && captureFormat.BitsPerSample == 32;
+
+                // Scratch space for the distribution layer, reused so the capture callback
+                // does not allocate on every packet.
+                byte[] distribution = Array.Empty<byte>();
 
                 loopbackCapture.DataAvailable += (s, args) =>
                 {
-                    networkStreamer.BroadcastAudio(args.Buffer, args.BytesRecorded);
+                    // ---- layer 2: distribution -------------------------------------
+                    //
+                    // One clean copy of the source, with the default device's volume divided
+                    // back out, that every consumer draws from - the local outputs and the
+                    // network listeners alike. Loopback capture is post-volume, so without
+                    // this step everything downstream inherits whatever the master happened
+                    // to be set to, and a listener on a phone could never reach full level.
+                    //
+                    // Per-consumer volume, equaliser and delay come after this, in layer 3,
+                    // so no consumer's settings can leak into another's.
+                    RefreshDistributionGain();
 
-                    const int TargetBufferDurationMs = 50;
+                    byte[] source = args.Buffer;
+                    int sourceBytes = args.BytesRecorded;
+
+                    float gain = distributionGain;
+                    if (captureIsFloat && Math.Abs(gain - 1.0f) > 0.001f)
+                    {
+                        if (distribution.Length < sourceBytes) distribution = new byte[sourceBytes];
+                        for (int i = 0; i + 3 < sourceBytes; i += 4)
+                        {
+                            float v = BitConverter.ToSingle(args.Buffer, i) * gain;
+                            BitConverter.TryWriteBytes(distribution.AsSpan(i, 4), SoftLimit(v));
+                        }
+                        source = distribution;
+                    }
+
+                    networkStreamer.BroadcastAudio(source, sourceBytes);
+
+                    // Level of the source itself, before this app or any output touches it.
+                    if (captureIsFloat)
+                    {
+                        float peak = 0f;
+                        for (int i = 0; i + 3 < sourceBytes; i += 4)
+                        {
+                            float v = Math.Abs(BitConverter.ToSingle(source, i));
+                            if (v > peak) peak = v;
+                        }
+                        SourcePeakLevel = Math.Clamp(peak * sourceMeterGain, 0f, 1f);
+                    }
+
+                    const int TargetBufferDurationMs = 30;
                     int targetBytes = (int)((TargetBufferDurationMs * captureFormat.AverageBytesPerSecond) / 1000.0);
                     targetBytes -= targetBytes % captureFormat.BlockAlign;
 
-                    int toleranceBytes = (int)((20 * captureFormat.AverageBytesPerSecond) / 1000.0);
+                    int toleranceBytes = (int)((10 * captureFormat.AverageBytesPerSecond) / 1000.0);
                     toleranceBytes -= toleranceBytes % captureFormat.BlockAlign;
 
                     foreach (var buffer in buffers)
@@ -122,9 +253,22 @@ namespace SoundSync.Services
                                 buffer.AddSamples(silence, 0, bytesToPad);
                             }
                         }
-                        buffer.AddSamples(args.Buffer, 0, args.BytesRecorded);
+                        buffer.AddSamples(source, 0, sourceBytes);
                     }
                 };
+                // Windows kills the capture when the source endpoint is reconfigured or
+                // unplugged. Without this the app sits there believing it is still mirroring
+                // while every output has gone quiet.
+                loopbackCapture.RecordingStopped += (s, e) =>
+                {
+                    if (!isConnected) return;
+                    string why = e.Exception != null
+                        ? AudioErrors.Describe(e.Exception, "capture device")
+                        : "The source device stopped providing audio.";
+                    logCallback("Mirroring stopped: " + why);
+                    onDisconnectedCallback();
+                };
+
                 loopbackCapture.StartRecording();
                 isConnected = true;
             }
@@ -132,8 +276,17 @@ namespace SoundSync.Services
             {
                 Disconnect(selectedDevices);
                 onDisconnectedCallback();
-                throw new InvalidOperationException("Error starting audio routing: " + ex.Message, ex);
+                throw new InvalidOperationException(
+                    ex is InvalidOperationException ? ex.Message
+                    : "Could not start mirroring.\n\n" + AudioErrors.Describe(ex, "audio engine"), ex);
             }
+        }
+
+        /// <summary>Format this endpoint expects, falling back to the captured one.</summary>
+        private static WaveFormat GetOutputFormat(MMDevice device, WaveFormat fallback)
+        {
+            try { return device.AudioClient.MixFormat; }
+            catch { return fallback; }
         }
 
         public void Disconnect(List<DeviceItem> activeDevices)
@@ -158,23 +311,178 @@ namespace SoundSync.Services
                 item.VolumeProvider = null;
                 item.EqualizerProvider = null;
                 item.DelayProvider = null;
+                item.OutputBuffer = null;
                 item.PeakLevel = 0f;
             }
 
+            SourcePeakLevel = 0f;
+            captureSource = null;
+            usingPreVolumeCapture = false;
             isConnected = false;
+        }
+
+        /// <summary>
+        /// Highest make-up gain allowed when undoing the default device's volume. At 8x the
+        /// signal is already lifted by 18 dB, and going further would mostly raise the noise
+        /// floor of a stream that had almost nothing left in it.
+        /// </summary>
+        private const float MaxMakeUpGain = 8.0f;
+
+        /// <summary>Above this the curve bends instead of the signal being cut off.</summary>
+        private const float LimitKnee = 0.85f;
+
+        /// <summary>
+        /// Keeps a lifted signal inside range without the hard edge of a clamp.
+        ///
+        /// Cutting a waveform off flat at 1.0 replaces its peaks with straight lines, which
+        /// is heard as harshness and as the level lurching about on loud passages. Below the
+        /// knee nothing is touched at all; above it the curve tapers so a peak that would
+        /// have overshot lands just under full scale instead of being sliced.
+        /// </summary>
+        private static float SoftLimit(float sample)
+        {
+            float magnitude = Math.Abs(sample);
+            if (magnitude <= LimitKnee) return sample;
+
+            float over = magnitude - LimitKnee;
+            float headroom = 1.0f - LimitKnee;
+            float shaped = LimitKnee + headroom * (over / (over + headroom));
+
+            return sample < 0 ? -shaped : shaped;
+        }
+
+        /// <summary>
+        /// Scale the signal meters use so they read the source material rather than whatever
+        /// the default device's volume happens to be. Always applied, even when the make-up
+        /// gain itself is switched off - a meter that follows a volume knob tells you nothing
+        /// about whether audio is arriving.
+        /// </summary>
+        private volatile float sourceMeterGain = 1.0f;
+
+        /// <summary>
+        /// Gain applied once, at the distribution layer, to undo the default device's volume.
+        /// Every consumer draws from the result, so no one inherits the master's setting.
+        /// </summary>
+        private volatile float distributionGain = 1.0f;
+
+        /// <summary>The device being captured, so its level in decibels can be read.</summary>
+        private MMDevice? captureSource;
+
+        /// <summary>Whether the master volume should be divided back out at all.</summary>
+        private volatile bool makeUpEnabled = true;
+
+        /// <summary>Ticks of Environment.TickCount64 when the level was last read.</summary>
+        private long lastGainCheck;
+
+        /// <summary>
+        /// Re-reads the source's level and updates the distribution gain.
+        ///
+        /// The engine does this itself, on a short interval, rather than waiting to be told.
+        /// Relying on a volume notification reaching the UI and the UI passing it down left
+        /// the correction frozen at whatever it was when mirroring started - so turning the
+        /// PC volume down afterwards still dragged every consumer down with it.
+        /// </summary>
+        private void RefreshDistributionGain()
+        {
+            long now = Environment.TickCount64;
+            if (now - lastGainCheck < 200) return;
+            lastGainCheck = now;
+
+            // Nothing to undo when the signal never had the volume applied to it.
+            if (usingPreVolumeCapture)
+            {
+                distributionGain = 1.0f;
+                sourceMeterGain = 1.0f;
+                return;
+            }
+
+            float wanted = makeUpEnabled ? MakeUpGainForDevice(captureSource) : 1.0f;
+            distributionGain = wanted;
+            sourceMeterGain = makeUpEnabled ? 1.0f : MakeUpGainForDevice(captureSource);
+        }
+
+        /// <summary>Peak of the captured source, corrected for the default device's volume.</summary>
+        public float SourcePeakLevel { get; private set; }
+
+        /// <summary>Tells the engine what the default device's volume is right now.</summary>
+        public void SetDefaultDeviceVolume(float volume)
+        {
+            // Only meaningful while the correction is off; ApplyMakeUpGain sets both.
+            if (Math.Abs(distributionGain - 1.0f) < 0.001f) sourceMeterGain = MakeUpGainForDevice(captureSource);
+        }
+
+        /// <summary>
+        /// Cancels the default device's volume out of the mirrored signal.
+        ///
+        /// WASAPI loopback hands over the audio AFTER Windows has applied the default
+        /// device's volume, so a master sitting at 20% means the mirrors only ever receive a
+        /// fifth of the signal - and then attenuate it again with their own volume. Dividing
+        /// it back out gives every mirror the full-strength audio, so its own Windows volume
+        /// is the only thing setting how loud it plays.
+        /// </summary>
+        public static float MakeUpGainFor(float defaultDeviceVolume)
+        {
+            if (defaultDeviceVolume <= 0.001f) return 1.0f;   // nothing to recover from silence
+            return Math.Clamp(1.0f / defaultDeviceVolume, 1.0f, MaxMakeUpGain);
+        }
+
+        /// <summary>
+        /// Gain that undoes an endpoint's volume, worked out from the decibel value Windows
+        /// reports rather than from the 0..1 scalar.
+        ///
+        /// The scalar is a perceptual position on the slider, not an amplitude: at 40% Windows
+        /// is applying -13.9 dB, which is a factor of 0.202, not 0.4. Measured against a known
+        /// tone on this machine, amplitude = 10^(dB/20) predicts the captured level exactly at
+        /// every point, while treating the scalar as a factor under-compensates by half.
+        /// </summary>
+        public static float MakeUpGainForDecibels(float decibels)
+        {
+            if (float.IsNaN(decibels) || float.IsInfinity(decibels)) return 1.0f;
+
+            double factor = Math.Pow(10.0, decibels / 20.0);
+            if (factor <= 0.0001) return 1.0f;                // effectively silent, nothing to lift
+
+            return (float)Math.Clamp(1.0 / factor, 1.0, MaxMakeUpGain);
+        }
+
+        /// <summary>Reads the endpoint's level in decibels and returns the gain that undoes it.</summary>
+        public static float MakeUpGainForDevice(MMDevice? device)
+        {
+            if (device == null) return 1.0f;
+            try
+            {
+                if (device.AudioEndpointVolume.Mute) return 1.0f;
+                return MakeUpGainForDecibels(device.AudioEndpointVolume.MasterVolumeLevel);
+            }
+            catch { return 1.0f; }
+        }
+
+        /// <summary>Applies the make-up gain to every live output.</summary>
+        public void ApplyMakeUpGain(List<DeviceItem> activeDevices, float defaultDeviceVolume, bool enabled)
+        {
+            // Record the preference; the value itself is re-read from the endpoint's decibel
+            // level on a short interval, so it stays right even if nothing tells us again.
+            makeUpEnabled = enabled;
+            lastGainCheck = 0;
+            RefreshDistributionGain();
+
+            foreach (var item in activeDevices)
+                if (item.VolumeProvider != null)
+                    item.VolumeProvider.Volume = 1.0f;
         }
 
         public void UpdateRelativeDelays(List<DeviceItem> activeDevices)
         {
-            var selectedActiveItems = activeDevices.Where(i => i.IsSelected && i.DelayProvider != null).ToList();
-            if (selectedActiveItems.Count == 0) return;
-
-            int minDelaySetting = selectedActiveItems.Min(i => i.Delay);
-            foreach (var item in selectedActiveItems)
-                if (item.DelayProvider != null)
-                {
-                    item.DelayProvider.DelayMilliseconds = item.Delay - minDelaySetting;
-                }
+            // Each output holds back by its own setting. Subtracting the smallest setting
+            // across outputs, as this used to, meant a single mirrored output always came
+            // out at zero however far the slider moved - the earliest device is always
+            // itself. Delay is additive only: the default device plays straight from
+            // Windows and cannot be pulled earlier.
+            foreach (var item in activeDevices)
+            {
+                if (item.DelayProvider == null) continue;
+                item.DelayProvider.DelayMilliseconds = Math.Max(0, item.Delay);
+            }
         }
     }
 }

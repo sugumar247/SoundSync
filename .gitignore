@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Crash dumps left behind by the shell, not part of the project
+*.stackdump

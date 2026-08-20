@@ -10,7 +10,11 @@ namespace SoundSync.Services
         List<MMDevice> GetActiveRenderDevices();
         void Connect(List<DeviceItem> selectedDevices, INetworkStreamer networkStreamer, Action<string> logCallback, Action onDisconnectedCallback);
         void Disconnect(List<DeviceItem> activeDevices);
+        void ApplyMakeUpGain(List<DeviceItem> activeDevices, float defaultDeviceVolume, bool enabled);
         void UpdateRelativeDelays(List<DeviceItem> activeDevices);
+        void SetDefaultDeviceVolume(float volume);
+        float SourcePeakLevel { get; }
+        bool IsPreVolumeCapture { get; }
         bool IsConnected { get; }
     }
 }
