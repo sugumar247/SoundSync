@@ -139,8 +139,6 @@
 
   ## 🤝 Contributing
 
-[View the full list of contributors who helped build SoundSync!](https://github.
-  com/sugumar247/SoundSync/graphs/contributors)
   Contributions, issues, and feature requests are welcome!
 
   1. Fork the Project
