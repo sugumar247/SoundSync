@@ -33,7 +33,7 @@
 <img width="1920" height="1011" alt="Screenshot (69)" src="https://github.com/user-attachments/assets/f6f0d33f-e3ae-4860-8a59-05aa843ec048" />
 <img width="1920" height="1008" alt="Screenshot (68)" src="https://github.com/user-attachments/assets/c0d65f88-4f3c-420b-8baa-0c77dd495e9a" />
 
-<img width="1920" height="894" alt="Screenshot (19)" src="https://github.com/user-attachments/assets/a9297c49-3057-4618-b716-a896aa24257f" />
+<img width="1920" height="884" alt="610347227-a9297c49-3057-4618-b716-a896aa24257f" src="https://github.com/user-attachments/assets/589568c1-960f-485f-b1bc-35d42bb5e686" />
 
 
  ## ✨ Features
