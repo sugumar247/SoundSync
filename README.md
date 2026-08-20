@@ -36,84 +36,111 @@
 <img width="1920" height="894" alt="Screenshot (19)" src="https://github.com/user-attachments/assets/a9297c49-3057-4618-b716-a896aa24257f" />
 
 
+ ## ✨ Features
+  • Multi-Endpoint Routing: Play a single audio source (like a YouTube video, Spotify, or games) through multiple
+  headphones or speakers at the exact same time.
+  • 🌐 Network Audio Streaming (New!): Stream your PC audio to any smartphone browser on your local network. You can
+  also connect desktop media players like VLC or foobar2000 using dedicated raw streams. Secured with token
+  authentication.
+  • 🛡️ Resilient Audio Engine: Safely hot-swap headphones, dock monitors, or connect via Remote Desktop without
+  crashing. The audio session automatically detects changes and gracefully rebuilds itself in the background.
+  • Intelligent Format Conversion: Seamlessly mirror audio between devices with completely different formats. Mix
+  and match 4-channel surround outputs and stereo headphones—SoundSync handles the channel mapping and resampling
+  automatically.
+  • Per-Device Delay & Volume: Precisely align audio with absolute millisecond delay sliders per output. Every
+  connected device (local or remote) gets its own true volume control, completely independent of the master Windows
+  volume.
+  • Anti-Feedback Loop Protection: Automatically detects your default Windows playback device and prevents audio
+  from being routed back into it, eliminating infinite echo loops.
+  • Modern UI: Built with Windows Presentation Foundation (WPF) featuring a sleek, dark-mode graphical interface,
+  native system fonts, and clear error explanations.
 
-## ✨ Features
+  ## ⚙️ How it Works
 
-- **Multi-Endpoint Routing:** Play a single audio source (like a YouTube video or Spotify or any audio source) through multiple headphones or speakers at the exact same time.
-- **Aggressive Latency Control:** Implements a custom ring-buffer clearing strategy to combat hardware clock drift, ensuring secondary devices stay within ~10-30ms of real-time.
-- **Anti-Feedback Loop Protection:** Automatically detects your default Windows playback device and prevents audio from being routed back into it, completely eliminating infinite echo loops.
-- **Dynamic Device Scanning:** Easily refresh the device list to detect newly plugged-in USB or Bluetooth headphones without restarting the app.
-- **Modern UI:** Built with Windows Presentation Foundation (WPF) featuring a sleek, dark-mode graphical interface.
+  The application uses WasapiLoopbackCapture to intercept the raw audio bytes flowing to your default Windows audio
+  endpoint.
+  When you connect, the signal path goes through three layers:
+  1. Compatibility: Channels are mapped (e.g., folding 4-channel audio into stereo) and resampled to match each
+  target device.
+  2. Distribution: A clean copy of the audio is created. The master Windows volume is mathematically divided back
+  out, ensuring all mirrored outputs receive a pure signal.
+  3. Adjustments: Per-consumer volume, equalizers, and millisecond delays are applied right before the audio hits
+  the secondary hardware or network socket.
+  ## 🚀 Getting Started
+  ### 📥 Download & Installation (For Regular Users)
 
-## ⚙️ How it Works
+  You do not need to install anything to use SoundSync!
 
-The application uses `WasapiLoopbackCapture` to intercept the raw audio bytes flowing to your default Windows audio endpoint. 
+  1. Go to the Releases Page https://github.com/sugumar247/SoundSync/releases.
+  2. Download Latest SoundSync.exe.
+  3. Double-click the file to run it. That's it!
+  4. (If you face any issues saving settings or setting default devices, open the application with "Run as
+  Administrator").
 
-When the user clicks "Connect", the app initializes a separate `WasapiOut` stream for every selected hardware device in Shared Mode. As Windows fires `DataAvailable` events containing the live audio bytes, the application aggressively broadcasts those bytes into a `BufferedWaveProvider` attached to every selected output.
+  ### 🎛️ How to Use It (Local Devices)
 
-## 🚀 Getting Started
+  SoundSync works by capturing audio from your Default Windows Output and mirroring it to other devices.
+  1. Do nothing with your main speakers — whatever is set as your default Windows audio device is automatically your
+  Source.
+  2. Open SoundSync and check the boxes for the devices you want to mirror audio to (e.g., your secondary headphones
+  or TV).
+  3. Note: Do NOT check the box for your default device. It is already the source.
+  4. Click Connect. Audio will now play through your main speakers AND all selected devices!
+  ### 📱 How to Use It (Network Streaming)
 
-### 📥 Download & Installation (For Regular Users)
+  1. Click Connect in SoundSync.
+  2. The app will generate a secure Web URL and a token.
+  3. Open that URL on your phone or tablet's browser on the same Wi-Fi network.
+  4. Tap to begin listening. You will see your device appear in the SoundSync desktop app, where you can control its
+  volume independently!
+  ### 💻 Building from Source (For Developers)
 
-You do not need to install anything to use SoundSync! 
+  1. Clone the repository:
+    git clone https://github.com/sugumar247/SoundSync.git
+    
+  2. Open SoundSync.slnx in Visual Studio 2022.
+  3. The project relies on the NAudio https://github.com/naudio/NAudio library. Visual Studio should restore this
+  NuGet package automatically. If not, run:
+    dotnet restore
+    
+  4. Press F5 to compile and run the application.
 
-1. Go to the [Releases Page](https://github.com/sugumar247/SoundSync/releases).
-2. Download Latest **SoundSync.exe**.
-3. Double-click the file to run it. That's it!
-4. If you face any issue, open the application with  "Run as Administrator".
+  ## 🎧 Usage & "Perfect Sync" Tutorial
 
-### 🎛️ How to Use It (The Basics)
+  If you are trying to share a movie with a friend using two pairs of headphones, you might notice a slight delay on
+  the 2nd pair of headphones if you capture audio directly from the 1st pair. You can now fix this in two ways:
+  Because SoundSync now features absolute millisecond delay sliders per output, simply adjust the delay slider on
+  the faster device until it perfectly matches the slower device.
 
-SoundSync works by capturing audio from your **Default Windows Output** and mirroring it to other devices.
+  Method 2: The "Dummy Hardware" Trick (For 100% mathematical sync)
 
-1. **Do nothing with your main speakers** — whatever is set as your default Windows audio device is automatically your **Source**.
-2. Open SoundSync and **check the boxes** for the devices you want to mirror audio to (e.g., your secondary headphones or TV). 
-3. *Note: Do NOT check the box for your default device. It is already the source.*
-4. Click **Connect**. Audio will now play through your main speakers AND all selected devices!
+  1. Look at your Windows sound settings and find an audio device you aren't currently using (e.g., an HDMI Monitor
+  Method 1: The Delay Sliders
+  with no speakers, or a Virtual Audio Cable like VB-Audio Cable).
+  2. Set that silent device as your Default Windows Output. (Your computer will go silent).
+  3. Open SoundSync.
+  4. Check the boxes for Headphone 1 and Headphone 2.
+  5. Click Connect.
 
-### 💻 Building from Source (For Developers)
+  Because both headphones are now receiving audio via the SoundSync distribution engine rather than one receiving it
+  directly from Windows, their latency is identical.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/sugumar247/SoundSync.git
-   ```
-2. Open `SoundSync.slnx` in Visual Studio 2022.
-3. The project relies on the [NAudio](https://github.com/naudio/NAudio) library. Visual Studio should restore this NuGet package automatically. If not, run:
-   ```bash
-   dotnet restore
-   ```
-4. Press `F5` to compile and run the application.
+  ## 🛠️ Built With
 
-## 🎧 Usage & "Perfect Sync" Tutorial
+  • C# / .NET 10.0 - The core framework
+  • WPF - UI Framework
+  • NAudio https://github.com/naudio/NAudio - Audio and WASAPI interaction
 
-If you are trying to share a movie with a friend using two pairs of headphones, you will notice a slight ~30ms delay on the 2nd pair of headphones if you capture audio directly from the 1st pair. 
+  ## 🤝 Contributing
 
-To achieve **100.00% perfect synchronization** with zero echoes, use the "Dummy Hardware" trick:
+  Contributions, issues, and feature requests are welcome!
 
-1. Look at your Windows sound settings and find an audio device you aren't currently using (e.g., an HDMI Monitor with no speakers, or a Virtual Audio Cable like *VB-Audio Cable*).
-2. Set that silent device as your **Default Windows Output**. (Your computer will go silent).
-3. Open **SoundSync**.
-4. Check the boxes for **Headphone 1** and **Headphone 2** or more. 
-5. Click **Connect**. 
+  1. Fork the Project
+  2. Create your Feature Branch (git checkout -b feature/AmazingFeature)
+  3. Commit your Changes (git commit -m 'Add some AmazingFeature')
+  4. Push to the Branch (git push origin feature/AmazingFeature)
+  5. Open a Pull Request
 
-The app will now capture the silent audio stream, duplicate it, and push it to *both* sets of headphones via the C# engine. Because they share the exact same routing path, their latency is identical and they are perfectly synchronized!
+  ## 📝 License
 
-## 🛠️ Built With
-
-* **C# / .NET 10.0** - The core framework
-* **WPF** - UI Framework
-* **[NAudio](https://github.com/naudio/NAudio)** - Audio and WASAPI interaction
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! 
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+  Distributed under the MIT License. See LICENSE for more information.
