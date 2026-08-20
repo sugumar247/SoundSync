@@ -39,19 +39,25 @@
  ## ✨ Features
   • Multi-Endpoint Routing: Play a single audio source (like a YouTube video, Spotify, or games) through multiple
   headphones or speakers at the exact same time.
-  • 🌐 Network Audio Streaming (New!): Stream your PC audio to any smartphone browser on your local network. You can
+  
+  • Network Audio Streaming (New!): Stream your PC audio to any smartphone browser on your local network. You can
   also connect desktop media players like VLC or foobar2000 using dedicated raw streams. Secured with token
   authentication.
-  • 🛡️ Resilient Audio Engine: Safely hot-swap headphones, dock monitors, or connect via Remote Desktop without
+  
+  • Resilient Audio Engine: Safely hot-swap headphones, dock monitors, or connect via Remote Desktop without
   crashing. The audio session automatically detects changes and gracefully rebuilds itself in the background.
+  
   • Intelligent Format Conversion: Seamlessly mirror audio between devices with completely different formats. Mix
   and match 4-channel surround outputs and stereo headphones—SoundSync handles the channel mapping and resampling
   automatically.
+  
   • Per-Device Delay & Volume: Precisely align audio with absolute millisecond delay sliders per output. Every
   connected device (local or remote) gets its own true volume control, completely independent of the master Windows
   volume.
+  
   • Anti-Feedback Loop Protection: Automatically detects your default Windows playback device and prevents audio
-  from being routed back into it, eliminating infinite echo loops.
+  from being routed back into it, eliminating infinite echo loops. 
+  
   • Modern UI: Built with Windows Presentation Foundation (WPF) featuring a sleek, dark-mode graphical interface,
   native system fonts, and clear error explanations.
 
@@ -133,6 +139,8 @@
 
   ## 🤝 Contributing
 
+[View the full list of contributors who helped build SoundSync!](https://github.
+  com/sugumar247/SoundSync/graphs/contributors)
   Contributions, issues, and feature requests are welcome!
 
   1. Fork the Project
