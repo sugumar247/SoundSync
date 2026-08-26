@@ -36,7 +36,7 @@
 <img width="1920" height="884" alt="610347227-a9297c49-3057-4618-b716-a896aa24257f" src="https://github.com/user-attachments/assets/589568c1-960f-485f-b1bc-35d42bb5e686" />
 
 
- ## ✨ Features
+ ##  Features
   • Multi-Endpoint Routing: Play a single audio source (like a YouTube video, Spotify, or games) through multiple
   headphones or speakers at the exact same time.
   
@@ -61,7 +61,7 @@
   • Modern UI: Built with Windows Presentation Foundation (WPF) featuring a sleek, dark-mode graphical interface,
   native system fonts, and clear error explanations.
 
-  ## ⚙️ How it Works
+  ##  How it Works
 
   The application uses WasapiLoopbackCapture to intercept the raw audio bytes flowing to your default Windows audio
   endpoint.
@@ -72,8 +72,8 @@
   out, ensuring all mirrored outputs receive a pure signal.
   3. Adjustments: Per-consumer volume, equalizers, and millisecond delays are applied right before the audio hits
   the secondary hardware or network socket.
-  ## 🚀 Getting Started
-  ### 📥 Download & Installation (For Regular Users)
+  ##  Getting Started
+  ###  Download & Installation (For Regular Users)
 
   You do not need to install anything to use SoundSync!
 
@@ -83,7 +83,7 @@
   4. (If you face any issues saving settings or setting default devices, open the application with "Run as
   Administrator").
 
-  ### 🎛️ How to Use It (Local Devices)
+  ###  How to Use It (Local Devices)
 
   SoundSync works by capturing audio from your Default Windows Output and mirroring it to other devices.
   1. Do nothing with your main speakers — whatever is set as your default Windows audio device is automatically your
@@ -92,14 +92,14 @@
   or TV).
   3. Note: Do NOT check the box for your default device. It is already the source.
   4. Click Connect. Audio will now play through your main speakers AND all selected devices!
-  ### 📱 How to Use It (Network Streaming)
+  ###  How to Use It (Network Streaming)
 
   1. Click Connect in SoundSync.
   2. The app will generate a secure Web URL and a token.
   3. Open that URL on your phone or tablet's browser on the same Wi-Fi network.
   4. Tap to begin listening. You will see your device appear in the SoundSync desktop app, where you can control its
   volume independently!
-  ### 💻 Building from Source (For Developers)
+  ###  Building from Source (For Developers)
 
   1. Clone the repository:
     git clone https://github.com/sugumar247/SoundSync.git
@@ -111,7 +111,7 @@
     
   4. Press F5 to compile and run the application.
 
-  ## 🎧 Usage & "Perfect Sync" Tutorial
+  ##  Usage & "Perfect Sync" Tutorial
 
   If you are trying to share a movie with a friend using two pairs of headphones, you might notice a slight delay on
   the 2nd pair of headphones if you capture audio directly from the 1st pair. You can now fix this in two ways:
@@ -131,13 +131,13 @@
   Because both headphones are now receiving audio via the SoundSync distribution engine rather than one receiving it
   directly from Windows, their latency is identical.
 
-  ## 🛠️ Built With
+  ##  Built With
 
   • C# / .NET 10.0 - The core framework
   • WPF - UI Framework
   • NAudio https://github.com/naudio/NAudio - Audio and WASAPI interaction
 
-  ## 🤝 Contributing
+  ##  Contributing
 
   Contributions, issues, and feature requests are welcome!
 
